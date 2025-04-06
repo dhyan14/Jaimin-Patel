@@ -45,8 +45,15 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploadProgress(0);
+
     if (!enrollmentNo || !studentName || !file) {
       toast.error('Please fill all the required fields');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      toast.error('File size must be less than 10MB');
       return;
     }
 
@@ -70,7 +77,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+        throw new Error(errorData.message || errorData.details || 'Upload failed');
       }
       const data = await response.json();
 

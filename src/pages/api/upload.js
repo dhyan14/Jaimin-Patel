@@ -1,12 +1,11 @@
 import { google } from 'googleapis';
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import { googleConfig } from '../../config/google';
-import path from 'path';
+import formidable from 'formidable';
+import { Readable } from 'stream';
 
 export const config = {
   api: {
     bodyParser: false,
+    maxDuration: 60, // This allows the API route more time to upload files
   },
 };
 
@@ -54,17 +53,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create tmp directory if it doesn't exist
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
-    }
-
     // Parse the multipart form data
-    const form = new IncomingForm({
-      uploadDir: tmpDir,
-      keepExtensions: true,
-      multiples: true
+    const form = formidable({
+      maxFileSize: 10 * 1024 * 1024, // 10MB
     });
     
     console.log('Parsing form data...');
@@ -98,9 +89,18 @@ export default async function handler(req, res) {
       parents: [process.env.GOOGLE_FOLDER_ID]
     };
 
+    // Convert the file buffer to a readable stream
+    const fileBuffer = await new Promise((resolve, reject) => {
+      const chunks = [];
+      const readStream = file.createReadStream();
+      readStream.on('data', chunk => chunks.push(chunk));
+      readStream.on('error', reject);
+      readStream.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+
     const media = {
       mimeType: file.mimetype,
-      body: fs.createReadStream(file.filepath),
+      body: Readable.from(fileBuffer)
     };
 
     try {
