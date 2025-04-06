@@ -24,7 +24,7 @@ export default function Home() {
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
             <p className="math-equation text-2xl">
-              Where \(f(passion) = \int_{knowledge}^{innovation} creativity \, dx\)
+              {'Where \(f(\text{passion}) = \int_{\text{knowledge}}^{\text{innovation}} \text{creativity} \, dx\)'}
             </p>
           </motion.p>
         </div>
