@@ -19,7 +19,6 @@ console.log('Environment Variables:', {
   CLIENT_ID,
   API_KEY,
   FOLDER_ID,
-  SCOPES
 });
 
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
@@ -62,28 +61,23 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         const origin = window.location.origin;
         console.log('Current origin:', origin);
 
-        const initializeTokenClient = () => {
-          if (!window.google || !CLIENT_ID) return;
-
-          console.log('Current origin:', window.location.origin);
-          const config = {
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: '', // defined at request time
-            prompt: 'consent',
-            access_type: 'offline'
-          };
-          
-          console.log('Initializing token client with config:', config);
-
-          const client = window.google.accounts.oauth2.initTokenClient(config);
-
-          setTokenClient(client);
-          console.log('Token client initialized');
-          setGisInited(true);
+        // Initialize token client with minimal configuration
+        const tokenClientConfig = {
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          callback: '', // Will be set later
+          error_callback: (error) => {
+            console.error('OAuth error:', error);
+            console.log('Error details:', JSON.stringify(error, null, 2));
+            toast.error(`Authentication error: ${error.error || 'Unknown error'}`);
+          }
         };
 
-        initializeTokenClient();
+        console.log('Initializing token client with config:', tokenClientConfig);
+        const client = window.google.accounts.oauth2.initTokenClient(tokenClientConfig);
+        console.log('Token client initialized');
+        setTokenClient(client);
+        setGisInited(true);
       } catch (error) {
         console.error('Error in GAPI initialization:', error);
         if (error.details?.includes('oauth2')) {
@@ -177,6 +171,13 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
 
+      // Create file metadata
+      const metadata = {
+        name: filename,
+        mimeType: 'application/pdf',
+        parents: [FOLDER_ID]
+      };
+
       // Read file as ArrayBuffer
       const content = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -187,91 +188,133 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       setUploadProgress(30);
 
-      console.log('Starting file upload...');
+      console.log('Starting Google Drive upload...');
+      console.log('Folder ID:', FOLDER_ID);
+      console.log('Metadata:', metadata);
       
+      if (!FOLDER_ID) {
+        throw new Error('Google Drive folder ID is not configured');
+      }
+
+      const accessToken = window.gapi.client.getToken()?.access_token;
+      if (!accessToken) {
+        throw new Error('No access token available. Please sign in again.');
+      }
+      console.log('Access token available:', !!accessToken);
+
+      console.log('Creating file in Google Drive...');
+      
+      // First verify folder permissions
       try {
-        // First check if we're signed in
-        const token = window.gapi.client.getToken();
-        if (!token) {
-          throw new Error('Not signed in. Please sign in and try again.');
+        const folderPermissions = await window.gapi.client.drive.files.get({
+          fileId: FOLDER_ID,
+          fields: 'capabilities'
+        });
+        console.log('Folder permissions:', folderPermissions.result.capabilities);
+        
+        if (!folderPermissions.result.capabilities?.canAddChildren) {
+          throw new Error('You do not have permission to add files to this folder');
         }
-
-        // Create file metadata
-        const fileMetadata = {
-          name: filename,
-          mimeType: 'application/pdf',
-          parents: [FOLDER_ID]
-        };
-
-        // First create an empty file
-        const createRequest = await window.gapi.client.drive.files.create({
-          resource: fileMetadata,
-          fields: 'id'
-        });
-
-        if (!createRequest.result || !createRequest.result.id) {
-          throw new Error('Failed to create file');
-        }
-
-        const fileId = createRequest.result.id;
-        console.log('Created empty file:', fileId);
-
-        // Now upload the content
-        const uploadRequest = await window.gapi.client.request({
-          path: `/upload/drive/v3/files/${fileId}`,
-          method: 'PATCH',
-          params: { uploadType: 'media' },
-          headers: {
-            'Content-Type': 'application/pdf',
-          },
-          body: content
-        });
-
-        if (!uploadRequest.result) {
-          throw new Error('Failed to upload file content');
-        }
-
-        // Get the final file details
-        const getRequest = await window.gapi.client.drive.files.get({
-          fileId: fileId,
-          fields: 'id,name,webViewLink'
-        });
-
-        const result = getRequest.result;
-        console.log('Upload successful:', result);
-
-        setUploadProgress(100);
-        toast.success('Assignment submitted successfully!');
-
-        // Store submission locally
-        const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
-        submissions.push({
-          id: result.id,
-          assignmentId,
-          enrollmentNo,
-          studentName,
-          filename,
-          submittedAt: new Date().toISOString(),
-          webViewLink: result.webViewLink
-        });
-        localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
-
       } catch (error) {
-        console.error('Upload error:', error);
-        let errorMessage = 'Upload failed: ';
-        
-        if (error.result && error.result.error) {
-          const { code, message } = error.result.error;
-          errorMessage += `${code} - ${message}`;
-        } else if (error.message) {
-          errorMessage += error.message;
-        } else {
-          errorMessage += 'Unknown error occurred';
+        console.error('Error checking folder permissions:', error);
+        if (error.result?.error?.code === 403) {
+          throw new Error('You do not have access to the target folder. Please contact the administrator.');
         }
-        
-        toast.error(errorMessage);
         throw error;
       }
+      
+      // Create file without specifying parent first
+      const createResponse = await window.gapi.client.drive.files.create({
+        resource: {
+          name: filename,
+          mimeType: 'application/pdf'
+        },
+        fields: 'id, name, webViewLink'
+      });
+      
+      // Then move it to the target folder
+      const fileId = createResponse.result.id;
+      try {
+        await window.gapi.client.drive.files.update({
+          fileId: fileId,
+          addParents: FOLDER_ID,
+          fields: 'id, parents'
+        });
+        console.log('File moved to target folder');
+      } catch (error) {
+        console.error('Error moving file to target folder:', error);
+        throw error;
+      }
+      
+      console.log('File created:', createResponse.result);
+      
+      // Now upload the content
+      const media = new Blob([content], { type: 'application/pdf' });
+      
+      console.log('Uploading file content...');
+      const response = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=media`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/pdf'
+          },
+          body: media
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status);
+        console.error('Error response:', errorText);
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('File uploaded successfully:', data);
+      
+      // Verify the file exists in the folder
+      console.log('Verifying file in folder:', FOLDER_ID);
+      
+      // First verify folder exists
+      const folderResponse = await window.gapi.client.drive.files.get({
+        fileId: FOLDER_ID,
+        fields: 'id, name'
+      }).catch(error => {
+        console.error('Error checking folder:', error);
+        throw new Error('Could not verify folder exists');
+      });
+      
+      console.log('Found folder:', folderResponse.result);
+      
+      // Now check for the file
+      const fileListResponse = await window.gapi.client.drive.files.list({
+        q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+        fields: 'files(id, name, webViewLink)',
+        spaces: 'drive'
+      });
+      
+      const files = fileListResponse.result.files;
+      console.log('Files found in folder:', files);
+      
+      if (!files || files.length === 0) {
+        throw new Error('File was uploaded but not found in the specified folder');
+      }
+      
+      setUploadProgress(100);
+      toast.success(`Assignment submitted successfully! File ID: ${data.id}`);
+
+      // Store submission locally
+      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+      submissions.push({
+        id: data.id,
+        assignmentId,
+        enrollmentNo,
+        studentName,
+        fileName: filename,
+        timestamp: new Date().toISOString(),
+        status: 'success'
+      });
+      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
 
       // Reset form
       setFile(null);
