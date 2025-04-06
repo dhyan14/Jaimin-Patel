@@ -4,20 +4,22 @@ import toast from 'react-hot-toast';
 import Script from 'next/script';
 import { format } from 'date-fns';
 
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+// Hardcode the client ID temporarily for testing
+const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_FOLDER_ID;
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
-// Log environment variables in development
-if (process.env.NODE_ENV === 'development') {
-  console.log('Environment Variables:', {
-    CLIENT_ID,
-    API_KEY,
-    FOLDER_ID,
-  });
-}
+console.log('Using Client ID:', CLIENT_ID);
+
+// Log environment variables
+console.log('Environment Variables:', {
+  NEXT_PUBLIC_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+  CLIENT_ID,
+  API_KEY,
+  FOLDER_ID,
+});
 
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
