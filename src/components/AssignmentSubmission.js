@@ -60,10 +60,14 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
             console.log('Error details:', JSON.stringify(error, null, 2));
             if (error.error === 'idpiframe_initialization_failed') {
               toast.error(`OAuth initialization failed. Origin: ${origin}. Please ensure this domain is registered in Google Cloud Console.`);
+            } else if (error.error === 'redirect_uri_mismatch') {
+              toast.error('Redirect URI mismatch. Please check Google Cloud Console configuration.');
             } else {
               toast.error(`Authentication error: ${error.error}`);
             }
-          }
+          },
+          ux_mode: 'popup',
+          redirect_uri: `${window.location.origin}/resources`
         };
 
         console.log('Initializing token client with config:', tokenClientConfig);
