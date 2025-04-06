@@ -36,7 +36,7 @@ export default function About() {
               src="/jaimin-patel.jpg"
               alt="Mr. Jaimin Patel"
               fill
-              style={{ objectFit: 'cover', objectPosition: '50% 55%' }}
+              style={{ objectFit: 'cover', objectPosition: '50% 65%' }}
               priority
               className="rounded-full"
             />
