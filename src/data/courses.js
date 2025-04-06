@@ -1,3 +1,11 @@
+export const assignmentsData = {
+  "B.Tech": {
+    "Sem-I": {
+      "Assignment 3.1": "https://drive.google.com/file/d/11iSgkma5b018OCZbPDuHO3k9DvwDAzb-/view?usp=sharing"
+    }
+  }
+};
+
 export const coursesData = {
   "B.Tech": {
     "Sem-I": {

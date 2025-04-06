@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AcademicCapIcon, BookOpenIcon, DocumentTextIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { coursesData } from '../data/courses';
+import { coursesData, assignmentsData } from '../data/courses';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
+
+import Navigation from '../components/Navigation';
 
 export default function Home() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
+  const [contentType, setContentType] = useState(null); // 'lectures' or 'assignments'
 
   const handleReset = () => {
     setSelectedCourse(null);
     setSelectedSemester(null);
     setSelectedUnit(null);
+    setContentType(null);
   };
 
   const handleBack = () => {
@@ -22,8 +26,10 @@ export default function Home() {
       setSelectedUnit(null);
     } else if (selectedSemester) {
       setSelectedSemester(null);
-    } else {
+    } else if (selectedCourse) {
       setSelectedCourse(null);
+    } else {
+      setContentType(null);
     }
   };
 
@@ -32,7 +38,26 @@ export default function Home() {
     return `https://drive.google.com/file/d/${fileId}/preview`;
   };
 
+  const getCurrentData = () => {
+    return contentType === 'assignments' ? assignmentsData : coursesData;
+  };
+
   const renderContent = () => {
+    if (!contentType) {
+      return (
+        <div className="space-y-6">
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-2xl font-display font-bold text-gray-900"
+          >
+            Select Content Type
+          </motion.h2>
+          <Navigation onSelect={setContentType} />
+        </div>
+      );
+    }
+
     if (!selectedCourse) {
       return (
         <div className="space-y-6">
@@ -44,7 +69,7 @@ export default function Home() {
             Select Your Course
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(coursesData).map((course, index) => (
+            {Object.keys(getCurrentData()).map((course, index) => (
               <Card
                 key={course}
                 title={course}
@@ -72,7 +97,7 @@ export default function Home() {
             Select Semester
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(coursesData[selectedCourse]).map((semester) => (
+            {Object.keys(getCurrentData()[selectedCourse]).map((semester) => (
               <Card
                 key={semester}
                 title={semester}
@@ -100,7 +125,7 @@ export default function Home() {
             Select Unit
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(coursesData[selectedCourse][selectedSemester]).map((unit) => (
+            {Object.keys(getCurrentData()[selectedCourse][selectedSemester]).map((unit) => (
               <Card
                 key={unit}
                 title={unit}
@@ -130,7 +155,7 @@ export default function Home() {
         </div>
         <div className="aspect-[16/9] w-full bg-gray-100">
           <iframe
-            src={getEmbedUrl(coursesData[selectedCourse][selectedSemester][selectedUnit])}
+            src={getEmbedUrl(getCurrentData()[selectedCourse][selectedSemester][selectedUnit])}
             className="w-full h-full"
             allow="autoplay"
             frameBorder="0"

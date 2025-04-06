@@ -3,8 +3,8 @@ import { Toaster } from 'react-hot-toast';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
-      <header className="bg-white shadow-md">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+      <header className="bg-green-600 shadow-md text-white">
         <div className="container mx-auto px-4 py-6">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
