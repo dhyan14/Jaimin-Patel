@@ -18,32 +18,46 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
+    console.log('Scripts loaded state:', scriptsLoaded);
+    console.log('GAPI available:', !!window.gapi);
+    console.log('Google available:', !!window.google);
+
     if (!scriptsLoaded || !window.gapi || !window.google) return;
 
     const initializeGoogleAPIs = async () => {
       try {
+        console.log('Initializing Google APIs...');
         // Initialize GAPI client
-        await window.gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: DISCOVERY_DOCS,
-        });
-        setGapiInited(true);
+        await window.gapi.load('client', async () => {
+          try {
+            await window.gapi.client.init({
+              apiKey: API_KEY,
+              discoveryDocs: DISCOVERY_DOCS,
+            });
+            console.log('GAPI client initialized');
+            setGapiInited(true);
 
-        // Initialize token client
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: CLIENT_ID,
-          scope: SCOPES,
-          callback: '', // Will be set later
+            // Initialize token client
+            const client = window.google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: SCOPES,
+              callback: '', // Will be set later
+            });
+            console.log('Token client initialized');
+            setTokenClient(client);
+            setGisInited(true);
+          } catch (error) {
+            console.error('Error in GAPI initialization:', error);
+            toast.error('Failed to initialize Google Drive integration');
+          }
         });
-        setTokenClient(client);
-        setGisInited(true);
       } catch (error) {
-        console.error('Error initializing Google APIs:', error);
-        toast.error('Failed to initialize Google Drive integration');
+        console.error('Error loading GAPI client:', error);
+        toast.error('Failed to load Google Drive client');
       }
     };
 
-    window.gapi.load('client', initializeGoogleAPIs);
+    initializeGoogleAPIs();
   }, [scriptsLoaded]);
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
@@ -195,18 +209,18 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
     <>
       <Script
         src="https://apis.google.com/js/api.js"
-        strategy="beforeInteractive"
-        onLoad={() => {
+        strategy="afterInteractive"
+        onReady={() => {
           console.log('Google API script loaded');
-          if (window.google) setScriptsLoaded(true);
+          if (window.gapi) setScriptsLoaded(true);
         }}
       />
       <Script
         src="https://accounts.google.com/gsi/client"
-        strategy="beforeInteractive"
-        onLoad={() => {
+        strategy="afterInteractive"
+        onReady={() => {
           console.log('Google Identity Services script loaded');
-          if (window.gapi) setScriptsLoaded(true);
+          if (window.google) setScriptsLoaded(true);
         }}
       />
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
