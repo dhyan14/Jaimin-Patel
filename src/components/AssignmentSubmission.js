@@ -1,10 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { students } from '../data/students';
 import toast from 'react-hot-toast';
-import { googleConfig } from '../config/google';
-import { format } from 'date-fns';
+import Script from 'next/script';
 
-export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_FOLDER_ID;
+
+const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
+  // Add Google API scripts
+  useEffect(() => {
+    // Add Google API script
+    const script1 = document.createElement('script');
+    script1.src = 'https://apis.google.com/js/api.js';
+    script1.async = true;
+    script1.defer = true;
+    document.body.appendChild(script1);
+
+    // Add Google Identity Services script
+    const script2 = document.createElement('script');
+    script2.src = 'https://accounts.google.com/gsi/client';
+    script2.async = true;
+    script2.defer = true;
+    document.body.appendChild(script2);
+
+    return () => {
+      // Cleanup scripts when component unmounts
+      document.body.removeChild(script1);
+      document.body.removeChild(script2);
+    };
+  }, []);
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
   const [file, setFile] = useState(null);
@@ -43,6 +71,37 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
     setIsOverdue(now > dueDateObj);
   }, [dueDate]);
 
+  const [tokenClient, setTokenClient] = useState(null);
+  const [gapiInited, setGapiInited] = useState(false);
+  const [gisInited, setGisInited] = useState(false);
+
+  useEffect(() => {
+    // Initialize the Google API client
+    const initializeGapiClient = async () => {
+      await window.gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: DISCOVERY_DOCS,
+      });
+      setGapiInited(true);
+    };
+
+    // Load the Google API client
+    if (window.gapi) {
+      window.gapi.load('client', initializeGapiClient);
+    }
+
+    // Initialize the token client
+    if (window.google) {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: '', // Will be set later
+      });
+      setTokenClient(client);
+      setGisInited(true);
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadProgress(0);
@@ -63,25 +122,83 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
     }
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('enrollmentNo', enrollmentNo);
-      formData.append('studentName', studentName);
-
       setUploadProgress(10);
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
+
+      // Check if we need to get access token
+      if (!window.gapi.client.getToken()) {
+        await new Promise((resolve, reject) => {
+          tokenClient.callback = (resp) => {
+            if (resp.error) {
+              reject(resp);
+            } else {
+              resolve(resp);
+            }
+          };
+          tokenClient.requestAccessToken({ prompt: 'consent' });
+        });
+      }
+
+      // Generate a unique filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+
+      // Create file metadata
+      const metadata = {
+        name: filename,
+        mimeType: 'application/pdf',
+        parents: [FOLDER_ID]
+      };
+
+      // Read file as ArrayBuffer
+      const content = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsArrayBuffer(file);
       });
-      setUploadProgress(90);
+
+      setUploadProgress(30);
+
+      // Upload to Google Drive
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', new Blob([content], { type: 'application/pdf' }));
+
+      const accessToken = window.gapi.client.getToken().access_token;
+      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken
+        },
+        body: form
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.details || 'Upload failed');
+        throw new Error('Upload failed');
       }
-      const data = await response.json();
 
+      const data = await response.json();
+      setUploadProgress(100);
       toast.success('Assignment submitted successfully!');
+
+      // Store submission locally
+      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+      submissions.push({
+        id: data.id,
+        assignmentId,
+        enrollmentNo,
+        studentName,
+        fileName: filename,
+        timestamp: new Date().toISOString(),
+        status: 'success'
+      });
+      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+
+      // Reset form
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       setUploadProgress(0);
     } catch (error) {
       console.error('Upload error:', error);
@@ -90,8 +207,18 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
     }
   };
 
+  const isReady = gapiInited && gisInited && tokenClient;
+
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
+      {!isReady && (
+        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+            <p>Loading Google Drive integration...</p>
+          </div>
+        </div>
+      )}
       <div className="mb-8 flex space-x-4">
         <a
           href={assignmentUrl}
