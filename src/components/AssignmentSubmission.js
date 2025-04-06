@@ -135,24 +135,20 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setUploadProgress(0);
 
-    if (!enrollmentNo || !studentName || !file) {
-      toast.error('Please fill all the required fields');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      toast.error('File size must be less than 10MB');
-      return;
-    }
-
-    if (isOverdue) {
-      toast.error('Assignment submission is closed as the due date has passed.');
+    if (!file) {
+      toast.error('Please select a file');
       return;
     }
 
     try {
+      // Get assignment ID from URL or props
+      const assignmentNumber = assignmentUrl?.split('/')?.[4]?.split('.')?.[0] || assignmentId;
+      if (!assignmentNumber) {
+        toast.error('Could not determine assignment number');
+        return;
+      }
+
       setUploadProgress(10);
 
       // Check if we need to get access token
@@ -169,16 +165,15 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         });
       }
 
-      // Generate a unique filename
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
-
-      // Create file metadata
-      const metadata = {
-        name: filename,
+      // Create file metadata with proper name
+      const fileMetadata = {
+        name: `Assignment ${assignmentNumber}.pdf`,
         mimeType: 'application/pdf',
         parents: [FOLDER_ID]
       };
+
+      // Store the proper filename for display
+      const displayFilename = fileMetadata.name;
 
       // Read file as ArrayBuffer
       const content = await new Promise((resolve, reject) => {
@@ -192,8 +187,8 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       console.log('Starting Google Drive upload...');
       console.log('Folder ID:', FOLDER_ID);
-      console.log('Metadata:', metadata);
-      
+      console.log('Metadata:', fileMetadata);
+
       if (!FOLDER_ID) {
         throw new Error('Google Drive folder ID is not configured');
       }
@@ -204,15 +199,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       }
       console.log('Access token available:', !!accessToken);
 
-      // Create file metadata
-      const fileMetadata = {
-        name: filename,
-        mimeType: 'application/pdf',
-        parents: [FOLDER_ID]
-      };
-
-      console.log('Creating file in Google Drive...');
-      
       // Create file with metadata
       const createRequest = window.gapi.client.drive.files.create({
         resource: fileMetadata,
@@ -229,13 +215,13 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           }
         });
       });
-      
+
       console.log('File created:', createResponse);
       const fileId = createResponse.id;
-      
+
       // Now upload the content
       const media = new Blob([content], { type: 'application/pdf' });
-      
+
       console.log('Uploading file content...');
       const response = await fetch(
         `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
@@ -245,7 +231,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
             'Content-Type': 'application/pdf'
           },
           body: media
-      });
+        });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -256,14 +242,14 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       const data = await response.json();
       console.log('File uploaded successfully:', data);
-      
+
       // Verify the file exists in the folder
       console.log('Verifying file in folder:', FOLDER_ID);
-      
+
       try {
         // Check for the file using list with folder as parent
         const fileListRequest = window.gapi.client.drive.files.list({
-          q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+          q: `'${FOLDER_ID}' in parents and name = '${displayFilename}'`,
           fields: 'files(id, name, webViewLink)',
           spaces: 'drive'
         });
@@ -278,10 +264,10 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
             }
           });
         });
-      
+
         const files = fileListResponse.files;
         console.log('Files found in folder:', files);
-        
+
         if (!files || files.length === 0) {
           console.warn('File was uploaded but not found in the specified folder');
           // Don't throw, just show a warning
@@ -290,7 +276,8 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           setUploadProgress(100);
           setUploadedFileInfo({
             fileId: fileId,
-            fileName: filename,
+            fileName: displayFilename,
+            assignmentNumber: assignmentNumber,
             uploadTime: new Date().toLocaleString()
           });
           setShowSuccessModal(true);
@@ -308,7 +295,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         assignmentId,
         enrollmentNo,
         studentName,
-        fileName: filename,
+        fileName: displayFilename,
         timestamp: new Date().toISOString(),
         status: 'success'
       });
@@ -346,7 +333,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg max-w-lg w-full mx-4 relative">
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
@@ -357,6 +344,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
               <h2 className="text-2xl font-bold mb-4 text-green-600">Assignment Uploaded Successfully!</h2>
               {uploadedFileInfo && (
                 <div className="text-left mb-6 bg-gray-50 p-4 rounded">
+                  <p className="mb-2"><span className="font-semibold">Assignment:</span> {uploadedFileInfo.assignmentNumber}</p>
                   <p className="mb-2"><span className="font-semibold">File Name:</span> {uploadedFileInfo.fileName}</p>
                   <p className="mb-2"><span className="font-semibold">File ID:</span> {uploadedFileInfo.fileId}</p>
                   <p><span className="font-semibold">Upload Time:</span> {uploadedFileInfo.uploadTime}</p>
@@ -389,93 +377,93 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         }}
       />
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
-      {!isReady && (
-        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
-            <p>Loading Google Drive integration...</p>
-          </div>
-        </div>
-      )}
-      <div className="mb-8 flex space-x-4">
-        <a
-          href={assignmentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg text-center hover:bg-green-700 transition-colors"
-        >
-          Download Assignment
-        </a>
-        <button
-          onClick={() => document.getElementById('assignmentForm').scrollIntoView({ behavior: 'smooth' })}
-          className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Submit Assignment
-        </button>
-      </div>
-
-      {isOverdue ? (
-        <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-          <strong className="font-bold">Submission Closed!</strong>
-          <p>The due date ({format(new Date(dueDate), 'MMMM d, yyyy h:mm a')}) has passed.</p>
-        </div>
-      ) : null}
-
-      <form id="assignmentForm" onSubmit={handleSubmit} className="space-y-6">
-        {uploadProgress > 0 && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-green-600 h-2.5 rounded-full"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+        {!isReady && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+              <p>Loading Google Drive integration...</p>
+            </div>
           </div>
         )}
-        <div>
-          <label htmlFor="enrollmentNo" className="block text-sm font-medium text-gray-700">
-            Enrollment Number
-          </label>
-          <input
-            type="text"
-            id="enrollmentNo"
-            value={enrollmentNo}
-            onChange={handleEnrollmentChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-            required
-          />
+        <div className="mb-8 flex space-x-4">
+          <a
+            href={assignmentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg text-center hover:bg-green-700 transition-colors"
+          >
+            Download Assignment
+          </a>
+          <button
+            onClick={() => document.getElementById('assignmentForm').scrollIntoView({ behavior: 'smooth' })}
+            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Submit Assignment
+          </button>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Student Name
-          </label>
-          <div className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-            {studentName || 'Student name will appear here'}
+        {isOverdue ? (
+          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+            <strong className="font-bold">Submission Closed!</strong>
+            <p>The due date ({format(new Date(dueDate), 'MMMM d, yyyy h:mm a')}) has passed.</p>
           </div>
-        </div>
+        ) : null}
 
-        <div>
-          <label htmlFor="file" className="block text-sm font-medium text-gray-700">
-            Upload Assignment (PDF only, max 10MB)
-          </label>
-          <input
-            type="file"
-            id="file"
-            ref={fileInputRef}
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            required
-          />
-        </div>
+        <form id="assignmentForm" onSubmit={handleSubmit} className="space-y-6">
+          {uploadProgress > 0 && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-green-600 h-2.5 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          )}
+          <div>
+            <label htmlFor="enrollmentNo" className="block text-sm font-medium text-gray-700">
+              Enrollment Number
+            </label>
+            <input
+              type="text"
+              id="enrollmentNo"
+              value={enrollmentNo}
+              onChange={handleEnrollmentChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+              required
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-        >
-          Submit Assignment
-        </button>
-      </form>
-    </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Student Name
+            </label>
+            <div className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+              {studentName || 'Student name will appear here'}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="file" className="block text-sm font-medium text-gray-700">
+              Upload Assignment (PDF only, max 10MB)
+            </label>
+            <input
+              type="file"
+              id="file"
+              ref={fileInputRef}
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+          >
+            Submit Assignment
+          </button>
+        </form>
+      </div>
     </>
   );
 }
