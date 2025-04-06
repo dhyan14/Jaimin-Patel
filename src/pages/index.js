@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRightIcon, BookOpenIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import 'katex/dist/katex.min.css';
 
 export default function Home() {
   return (
@@ -22,7 +23,16 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
-            Where f(Passion) = ∫<sub>Knowledge</sub><sup>Innovation</sup> Creativity dx
+            <span className="font-math inline-block mt-2">
+              <span className="text-2xl font-bold">f</span>(Passion) = 
+              <span className="text-2xl">∫</span>
+              <span className="relative">
+                <span className="absolute -bottom-4 text-sm">Knowledge</span>
+                <span className="absolute -top-4 text-sm">Innovation</span>
+              </span>
+              <span className="ml-8 text-2xl">Creativity</span> 
+              <span className="text-xl">dx</span>
+            </span>
           </motion.p>
         </div>
 
