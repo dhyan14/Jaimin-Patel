@@ -17,7 +17,7 @@ export default function Home() {
           >
             Welcome To My Math World
           </motion.h1>
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -26,7 +26,7 @@ export default function Home() {
             <p className="math-equation text-2xl">
               {'Where \(f(\text{passion}) = \int_{\text{knowledge}}^{\text{innovation}} \text{creativity} \, dx\)'}
             </p>
-          </motion.p>
+          </motion.div>
         </div>
 
         {/* Features Grid */}
