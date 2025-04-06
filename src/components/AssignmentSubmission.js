@@ -211,14 +211,25 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       console.log('Creating file in Google Drive...');
       
-      // First create the file metadata
-      const createResponse = await window.gapi.client.drive.files.create({
+      // Create file with metadata
+      const createRequest = window.gapi.client.drive.files.create({
         resource: fileMetadata,
         fields: 'id, name, webViewLink'
       });
+
+      const createResponse = await new Promise((resolve, reject) => {
+        createRequest.execute(response => {
+          if (response.error) {
+            console.error('Error creating file:', response.error);
+            reject(new Error('Could not create file'));
+          } else {
+            resolve(response);
+          }
+        });
+      });
       
-      console.log('File created:', createResponse.result);
-      const fileId = createResponse.result.id;
+      console.log('File created:', createResponse);
+      const fileId = createResponse.id;
       
       // Now upload the content
       const media = new Blob([content], { type: 'application/pdf' });
@@ -247,33 +258,58 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       // Verify the file exists in the folder
       console.log('Verifying file in folder:', FOLDER_ID);
       
-      // First verify folder exists
-      const folderResponse = await window.gapi.client.drive.files.get({
-        fileId: FOLDER_ID,
-        fields: 'id, name'
-      }).catch(error => {
-        console.error('Error checking folder:', error);
-        throw new Error('Could not verify folder exists');
-      });
+      try {
+        // First verify folder exists
+        const folderRequest = window.gapi.client.drive.files.get({
+          fileId: FOLDER_ID,
+          fields: 'id, name'
+        });
+
+        const folderResponse = await new Promise((resolve, reject) => {
+          folderRequest.execute(response => {
+            if (response.error) {
+              console.error('Error checking folder:', response.error);
+              reject(new Error('Could not verify folder exists'));
+            } else {
+              resolve(response);
+            }
+          });
+        });
+        
+        console.log('Found folder:', folderResponse);
+        
+        // Now check for the file
+        const fileListRequest = window.gapi.client.drive.files.list({
+          q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+          fields: 'files(id, name, webViewLink)',
+          spaces: 'drive'
+        });
+
+        const fileListResponse = await new Promise((resolve, reject) => {
+          fileListRequest.execute(response => {
+            if (response.error) {
+              console.error('Error listing files:', response.error);
+              reject(new Error('Could not list files in folder'));
+            } else {
+              resolve(response);
+            }
+          });
+        });
       
-      console.log('Found folder:', folderResponse.result);
-      
-      // Now check for the file
-      const fileListResponse = await window.gapi.client.drive.files.list({
-        q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
-        fields: 'files(id, name, webViewLink)',
-        spaces: 'drive'
-      });
-      
-      const files = fileListResponse.result.files;
-      console.log('Files found in folder:', files);
-      
-      if (!files || files.length === 0) {
-        throw new Error('File was uploaded but not found in the specified folder');
+        const files = fileListResponse.files;
+        console.log('Files found in folder:', files);
+        
+        if (!files || files.length === 0) {
+          throw new Error('File was uploaded but not found in the specified folder');
+        }
+        
+        setUploadProgress(100);
+        toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
+      } catch (verifyError) {
+        console.error('Verification error:', verifyError);
+        // Don't throw here since file is already uploaded
+        toast.warning('File uploaded but verification failed');
       }
-      
-      setUploadProgress(100);
-      toast.success(`Assignment submitted successfully! File ID: ${data.id}`);
 
       // Store submission locally
       const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
