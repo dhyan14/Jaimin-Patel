@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 // Hardcode the client ID temporarily for testing
 const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_FOLDER_ID;
+const FOLDER_ID = '1byxUjqQ-5kOX1RZYjGG9LAKF29KdzzPo';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -209,18 +209,29 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         parents: [FOLDER_ID]
       };
 
-      // Create multipart request
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
-      form.append('file', new Blob([content], { type: 'application/pdf' }));
-
-      console.log('Sending upload request to Google Drive...');
-      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: form
+      console.log('Creating file in Google Drive...');
+      
+      // First create the file metadata
+      const createResponse = await window.gapi.client.drive.files.create({
+        resource: fileMetadata,
+        fields: 'id, name, webViewLink'
+      });
+      
+      console.log('File created:', createResponse.result);
+      const fileId = createResponse.result.id;
+      
+      // Now upload the content
+      const media = new Blob([content], { type: 'application/pdf' });
+      
+      console.log('Uploading file content...');
+      const response = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/pdf'
+          },
+          body: media
       });
 
       if (!response.ok) {
@@ -234,10 +245,24 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       console.log('File uploaded successfully:', data);
       
       // Verify the file exists in the folder
-      console.log('Verifying file in folder...');
+      console.log('Verifying file in folder:', FOLDER_ID);
+      
+      // First verify folder exists
+      const folderResponse = await window.gapi.client.drive.files.get({
+        fileId: FOLDER_ID,
+        fields: 'id, name'
+      }).catch(error => {
+        console.error('Error checking folder:', error);
+        throw new Error('Could not verify folder exists');
+      });
+      
+      console.log('Found folder:', folderResponse.result);
+      
+      // Now check for the file
       const fileListResponse = await window.gapi.client.drive.files.list({
         q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
-        fields: 'files(id, name, webViewLink)'
+        fields: 'files(id, name, webViewLink)',
+        spaces: 'drive'
       });
       
       const files = fileListResponse.result.files;
