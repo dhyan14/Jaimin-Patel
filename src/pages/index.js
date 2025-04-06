@@ -1,222 +1,109 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AcademicCapIcon, BookOpenIcon, DocumentTextIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
-import { coursesData, assignmentsData } from '../data/courses';
+import { motion } from 'framer-motion';
+import { ArrowRightIcon, BookOpenIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import Layout from '../components/Layout';
-import Card from '../components/Card';
 
-import Navigation from '../components/Navigation';
-
-export default function Home() { // 'lectures' or 'assignments'
-
-  const handleReset = () => {
-    setSelectedCourse(null);
-    setSelectedSemester(null);
-    setSelectedUnit(null);
-    setContentType(null);
-  };
-
-  const handleBack = () => {
-    if (selectedUnit) {
-      setSelectedUnit(null);
-    } else if (selectedSemester) {
-      setSelectedSemester(null);
-    } else if (selectedCourse) {
-      setSelectedCourse(null);
-    } else {
-      setContentType(null);
-    }
-  };
-
-  const getEmbedUrl = (url) => {
-    const fileId = url.match(/\/d\/(.*?)\/view/)[1];
-    return `https://drive.google.com/file/d/${fileId}/preview`;
-  };
-
-  const getCurrentData = () => {
-    return contentType === 'assignments' ? assignmentsData : coursesData;
-  };
-
-  const renderAssignments = () => {
-    return (
-      <div className="space-y-6">
-        <motion.h2
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-2xl font-display font-bold text-gray-900"
-        >
-          Available Assignments
-        </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(assignmentsData).map(([key, assignment]) => (
-            <Card
-              key={key}
-              title={assignment.title}
-              subtitle={assignment.description}
-              onClick={() => {
-                // Handle download when URL is available
-                toast.success('Download feature coming soon!');
-              }}
-              icon={DocumentTextIcon}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderContent = () => {
-    if (!contentType) {
-      return (
-        <div className="space-y-6">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl font-display font-bold text-gray-900"
-          >
-            Select Content Type
-          </motion.h2>
-          <Navigation onSelect={setContentType} />
-        </div>
-      );
-    }
-
-    if (contentType === 'assignments') {
-      return renderAssignments();
-    }
-
-    if (!selectedCourse) {
-      return (
-        <div className="space-y-6">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl font-display font-bold text-gray-900"
-          >
-            Select Your Course
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(getCurrentData()).map((course, index) => (
-              <Card
-                key={course}
-                title={course}
-                subtitle="Click to view semesters"
-                onClick={() => {
-                  setSelectedCourse(course);
-                  toast.success(`Selected ${course}`);
-                }}
-                icon={AcademicCapIcon}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (!selectedSemester) {
-      return (
-        <div className="space-y-6">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl font-display font-bold text-gray-900"
-          >
-            Select Semester
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(getCurrentData()[selectedCourse]).map((semester) => (
-              <Card
-                key={semester}
-                title={semester}
-                subtitle="Click to view units"
-                onClick={() => {
-                  setSelectedSemester(semester);
-                  toast.success(`Selected ${semester}`);
-                }}
-                icon={BookOpenIcon}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (!selectedUnit) {
-      return (
-        <div className="space-y-6">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl font-display font-bold text-gray-900"
-          >
-            Select Unit
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(getCurrentData()[selectedCourse][selectedSemester]).map((unit) => (
-              <Card
-                key={unit}
-                title={unit}
-                subtitle="Click to view PDF"
-                onClick={() => {
-                  setSelectedUnit(unit);
-                  toast.success(`Opening ${unit}`);
-                }}
-                icon={DocumentTextIcon}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-md overflow-hidden"
-      >
-        <div className="p-6 bg-primary-50">
-          <h2 className="text-xl font-display font-semibold text-primary-900">
-            {selectedCourse} - {selectedSemester} - {selectedUnit}
-          </h2>
-        </div>
-        <div className="aspect-[16/9] w-full bg-gray-100">
-          <iframe
-            src={getEmbedUrl(getCurrentData()[selectedCourse][selectedSemester][selectedUnit])}
-            className="w-full h-full"
-            allow="autoplay"
-            frameBorder="0"
-          ></iframe>
-        </div>
-      </motion.div>
-    );
-  };
-
+export default function Home() {
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        {(selectedCourse || selectedSemester || selectedUnit) && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={handleBack}
-            className="mb-6 inline-flex items-center px-4 py-2 bg-white rounded-lg shadow-sm text-primary-600 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-          >
-            <ArrowLeftIcon className="w-5 h-5 mr-2" />
-            Back
-          </motion.button>
-        )}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${selectedCourse}-${selectedSemester}-${selectedUnit}`}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6"
           >
-            {renderContent()}
+            Welcome to Jaimin Patel's Portal
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-gray-600 max-w-2xl mx-auto"
+          >
+            Access educational resources, assignments, and more for B.Tech and MCA courses.
+          </motion.p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          {/* Resources Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <div className="p-8">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <BookOpenIcon className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Educational Resources</h3>
+              <p className="text-gray-600 mb-6">
+                Access course materials, lecture notes, and study resources for all semesters.
+              </p>
+              <Link
+                href="/resources"
+                className="inline-flex items-center text-green-600 hover:text-green-700 font-medium"
+              >
+                Browse Resources <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
           </motion.div>
-        </AnimatePresence>
+
+          {/* About Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <div className="p-8">
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <UserGroupIcon className="h-8 w-8 text-green-600" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">About Me</h3>
+              <p className="text-gray-600 mb-6">
+                Learn more about my academic background, teaching philosophy, and expertise.
+              </p>
+              <Link
+                href="/about"
+                className="inline-flex items-center text-green-600 hover:text-green-700 font-medium"
+              >
+                Learn More <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Quick Links */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center"
+        >
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Quick Links</h2>
+          <div className="inline-flex space-x-4">
+            <Link
+              href="/resources"
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              View Resources
+            </Link>
+            <Link
+              href="/about"
+              className="px-6 py-3 bg-white text-green-600 rounded-lg border border-green-600 hover:bg-green-50 transition-colors"
+            >
+              About Me
+            </Link>
+          </div>
+        </motion.div>
       </div>
     </Layout>
   );

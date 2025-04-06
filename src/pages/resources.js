@@ -33,7 +33,7 @@ export default function Resources() {
   };
 
   const getEmbedUrl = (url) => {
-    const fileId = url.match(/\\/d\\/(.*?)\\/view/)[1];
+    const fileId = url.match(/\/d\/([^/]+)\/view/)[1];
     return `https://drive.google.com/file/d/${fileId}/preview`;
   };
 
