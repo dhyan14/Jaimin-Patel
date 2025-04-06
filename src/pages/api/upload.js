@@ -42,13 +42,32 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Ensure required environment variables are set
+    const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI', 'GOOGLE_REFRESH_TOKEN', 'GOOGLE_FOLDER_ID'];
+    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingEnvVars.length > 0) {
+      console.error('Missing environment variables:', missingEnvVars);
+      return res.status(500).json({ 
+        message: 'Server configuration error', 
+        details: 'Missing required environment variables' 
+      });
+    }
+
+    // Create tmp directory if it doesn't exist
+    const tmpDir = path.join(process.cwd(), 'tmp');
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
     // Parse the multipart form data
     const form = new IncomingForm({
-      uploadDir: path.join(process.cwd(), 'tmp'),
+      uploadDir: tmpDir,
       keepExtensions: true,
       multiples: true
     });
     
+    console.log('Parsing form data...');
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) {
@@ -58,13 +77,25 @@ export default async function handler(req, res) {
         resolve([fields, files]);
       });
     });
+    console.log('Form data parsed successfully');
+
+    if (!files || !files.file || !files.file[0]) {
+      console.error('No file received in request');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
 
     const file = files.file[0];
     const { enrollmentNo, studentName } = fields;
 
+    if (!enrollmentNo || !studentName) {
+      console.error('Missing required fields:', { enrollmentNo, studentName });
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    console.log('Preparing file upload to Google Drive...');
     const fileMetadata = {
       name: `${enrollmentNo}_${file.originalFilename}`,
-      parents: [googleConfig.folderId]
+      parents: [process.env.GOOGLE_FOLDER_ID]
     };
 
     const media = {
@@ -72,21 +103,35 @@ export default async function handler(req, res) {
       body: fs.createReadStream(file.filepath),
     };
 
-    const response = await drive.files.create({
-      requestBody: fileMetadata,
-      media: media,
-      fields: 'id',
-    });
+    try {
+      console.log('Uploading file to Google Drive...');
+      const response = await drive.files.create({
+        requestBody: fileMetadata,
+        media: media,
+        fields: 'id',
+      });
+      console.log('File uploaded successfully to Google Drive');
 
-    // Clean up the temporary file
-    fs.unlinkSync(file.filepath);
+      // Clean up the temporary file
+      fs.unlinkSync(file.filepath);
 
-    res.status(200).json({
-      message: 'File uploaded successfully',
-      fileId: response.data.id,
-    });
+      res.status(200).json({
+        message: 'File uploaded successfully',
+        fileId: response.data.id,
+      });
+    } catch (driveError) {
+      console.error('Google Drive upload error:', driveError);
+      res.status(500).json({
+        message: 'Error uploading to Google Drive',
+        details: driveError.message
+      });
+    }
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ message: 'Error uploading file', error: error.message });
+    console.error('Upload handler error:', error);
+    // Ensure we don't send internal error details to client
+    res.status(500).json({ 
+      message: 'Error uploading file',
+      details: error.message
+    });
   }
 }
