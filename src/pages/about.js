@@ -1,23 +1,24 @@
 import { motion } from 'framer-motion';
-import { AcademicCapIcon, BriefcaseIcon, UserIcon } from '@heroicons/react/24/outline';
+import { AcademicCapIcon, BriefcaseIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 import Layout from '../components/Layout';
 
 export default function About() {
   const details = [
     {
       icon: AcademicCapIcon,
-      title: 'Education',
-      content: 'Professor with expertise in Computer Science and Engineering',
+      title: 'Educational Qualifications',
+      content: 'NET-JRF(Mathematics), M.Sc. (Mathematics), B.Sc. (Mathematics), B. Tech (Mechanical)',
     },
     {
       icon: BriefcaseIcon,
-      title: 'Experience',
-      content: 'Years of experience in teaching and research in computer science',
+      title: 'Academic Experience',
+      content: '6 Months',
     },
     {
-      icon: UserIcon,
-      title: 'Teaching Philosophy',
-      content: 'Focused on practical learning and student development',
+      icon: EnvelopeIcon,
+      title: 'Contact',
+      content: 'jaiminpatel@svgu.ac.in',
     },
   ];
 
@@ -30,11 +31,21 @@ export default function About() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <h1 className="text-4xl font-display font-bold text-gray-900 mb-6">
-            About Me
+          <div className="relative w-48 h-48 mx-auto mb-8 rounded-full overflow-hidden">
+            <Image
+              src="/jaimin-patel.jpg"
+              alt="Mr. Jaimin Patel"
+              fill
+              style={{ objectFit: 'cover' }}
+              priority
+              className="rounded-full"
+            />
+          </div>
+          <h1 className="text-4xl font-display font-bold text-gray-900 mb-4">
+            Mr. Jaimin Patel
           </h1>
-          <p className="text-xl text-gray-600">
-            Dedicated to providing quality education and resources for computer science students.
+          <p className="text-xl text-green-600 font-medium mb-6">
+            Assistant Professor
           </p>
         </motion.div>
 
@@ -73,14 +84,14 @@ export default function About() {
           </h2>
           <div className="prose prose-green max-w-none">
             <p>
-              This platform is designed to provide students with easy access to educational
-              resources, including lecture notes, assignments, and study materials. My goal
-              is to facilitate learning and help students achieve their academic objectives.
+              As an Assistant Professor with expertise in Mathematics and Engineering,
+              I am dedicated to providing quality education and resources to my students.
+              This platform serves as a centralized hub for accessing course materials,
+              assignments, and other educational resources.
             </p>
             <p className="mt-4">
-              Feel free to explore the resources section for course materials and assignments.
-              The content is regularly updated to ensure you have access to the latest
-              educational materials.
+              Feel free to explore the resources section where you'll find comprehensive
+              study materials and assignments designed to enhance your learning experience.
             </p>
           </div>
         </motion.div>
