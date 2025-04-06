@@ -42,7 +42,10 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
             console.log('GAPI client initialized');
             setGapiInited(true);
 
-            // Initialize token client
+            // Initialize token client with explicit origin
+            const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jaiminpatel-1.vercel.app';
+            console.log('Using origin:', origin);
+            
             const client = window.google.accounts.oauth2.initTokenClient({
               client_id: CLIENT_ID,
               scope: SCOPES,
@@ -54,7 +57,8 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
                 } else {
                   toast.error(`Authentication error: ${error.error}`);
                 }
-              }
+              },
+              hosted_domain: origin
             });
             console.log('Token client initialized');
             setTokenClient(client);
