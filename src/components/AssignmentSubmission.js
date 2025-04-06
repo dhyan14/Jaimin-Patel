@@ -26,6 +26,8 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
   const [gapiInited, setGapiInited] = useState(false);
   const [gisInited, setGisInited] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
@@ -286,7 +288,12 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           toast.error('File uploaded but folder verification failed');
         } else {
           setUploadProgress(100);
-          toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
+          setUploadedFileInfo({
+            fileId: fileId,
+            fileName: filename,
+            uploadTime: new Date().toLocaleString()
+          });
+          setShowSuccessModal(true);
         }
       } catch (verifyError) {
         console.error('Verification error:', verifyError);
@@ -336,6 +343,35 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   return (
     <>
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg max-w-lg w-full mx-4 relative">
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+            <div className="text-center">
+              <div className="mb-4 text-green-500 text-6xl">✓</div>
+              <h2 className="text-2xl font-bold mb-4 text-green-600">Assignment Uploaded Successfully!</h2>
+              {uploadedFileInfo && (
+                <div className="text-left mb-6 bg-gray-50 p-4 rounded">
+                  <p className="mb-2"><span className="font-semibold">File Name:</span> {uploadedFileInfo.fileName}</p>
+                  <p className="mb-2"><span className="font-semibold">File ID:</span> {uploadedFileInfo.fileId}</p>
+                  <p><span className="font-semibold">Upload Time:</span> {uploadedFileInfo.uploadTime}</p>
+                </div>
+              )}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Script
         src="https://apis.google.com/js/api.js"
         strategy="afterInteractive"
