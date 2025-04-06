@@ -23,17 +23,9 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
-            <span className="font-math inline-block mt-2 text-3xl">
-              Where <em>f</em>(<em>passion</em>) = 
-              <span className="inline-block mx-1">
-                <span className="text-4xl">∫</span>
-                <span className="relative mx-1">
-                  <span className="absolute -bottom-3 -left-8 text-base italic">knowledge</span>
-                  <span className="absolute -top-3 -left-8 text-base italic">innovation</span>
-                </span>
-              </span>
-              <em>creativity</em> <em>dx</em>
-            </span>
+            <p className="math-equation text-2xl">
+              Where \(f(passion) = \int_{knowledge}^{innovation} creativity \, dx\)
+            </p>
           </motion.p>
         </div>
 

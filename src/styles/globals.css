@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.math-equation {
+  font-family: 'KaTeX_Math', 'Times New Roman', serif;
+  line-height: 1.5;
+}
+
+.math-equation .katex {
+  font-size: 1.1em;
+}
+
 html,
 body {
   padding: 0;
