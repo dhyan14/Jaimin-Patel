@@ -18,6 +18,11 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
+    console.log('Environment variables:', {
+      CLIENT_ID,
+      API_KEY,
+      FOLDER_ID
+    });
     console.log('Scripts loaded state:', scriptsLoaded);
     console.log('GAPI available:', !!window.gapi);
     console.log('Google available:', !!window.google);
@@ -42,13 +47,25 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
               client_id: CLIENT_ID,
               scope: SCOPES,
               callback: '', // Will be set later
+              error_callback: (error) => {
+                console.error('OAuth error:', error);
+                if (error.error === 'idpiframe_initialization_failed') {
+                  toast.error('OAuth initialization failed. Please ensure your domain is registered in Google Cloud Console.');
+                } else {
+                  toast.error(`Authentication error: ${error.error}`);
+                }
+              }
             });
             console.log('Token client initialized');
             setTokenClient(client);
             setGisInited(true);
           } catch (error) {
             console.error('Error in GAPI initialization:', error);
-            toast.error('Failed to initialize Google Drive integration');
+            if (error.details?.includes('oauth2')) {
+              toast.error('OAuth configuration error. Please check your Google Cloud Console settings.');
+            } else {
+              toast.error('Failed to initialize Google Drive integration');
+            }
           }
         });
       } catch (error) {
@@ -205,6 +222,18 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   const isReady = gapiInited && gisInited && tokenClient;
 
+  // Track script loading state
+  const [gapiLoaded, setGapiLoaded] = useState(false);
+  const [gisLoaded, setGisLoaded] = useState(false);
+
+  // Update scriptsLoaded when both scripts are ready
+  useEffect(() => {
+    if (gapiLoaded && gisLoaded) {
+      console.log('Both scripts are loaded');
+      setScriptsLoaded(true);
+    }
+  }, [gapiLoaded, gisLoaded]);
+
   return (
     <>
       <Script
@@ -212,7 +241,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         strategy="afterInteractive"
         onReady={() => {
           console.log('Google API script loaded');
-          if (window.gapi) setScriptsLoaded(true);
+          if (window.gapi) setGapiLoaded(true);
         }}
       />
       <Script
@@ -220,7 +249,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         strategy="afterInteractive"
         onReady={() => {
           console.log('Google Identity Services script loaded');
-          if (window.google) setScriptsLoaded(true);
+          if (window.google) setGisLoaded(true);
         }}
       />
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
