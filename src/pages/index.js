@@ -23,15 +23,16 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
-            <span className="font-math inline-block mt-2">
-              <span className="text-2xl font-bold">f</span>(Passion) = 
-              <span className="text-2xl">∫</span>
-              <span className="relative">
-                <span className="absolute -bottom-4 text-sm">Knowledge</span>
-                <span className="absolute -top-4 text-sm">Innovation</span>
+            <span className="font-math inline-block mt-2 text-3xl">
+              Where <em>f</em>(<em>passion</em>) = 
+              <span className="inline-block mx-1">
+                <span className="text-4xl">∫</span>
+                <span className="relative mx-1">
+                  <span className="absolute -bottom-3 -left-8 text-base italic">knowledge</span>
+                  <span className="absolute -top-3 -left-8 text-base italic">innovation</span>
+                </span>
               </span>
-              <span className="ml-8 text-2xl">Creativity</span> 
-              <span className="text-xl">dx</span>
+              <em>creativity</em> <em>dx</em>
             </span>
           </motion.p>
         </div>
