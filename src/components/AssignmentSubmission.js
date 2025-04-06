@@ -19,6 +19,7 @@ console.log('Environment Variables:', {
   CLIENT_ID,
   API_KEY,
   FOLDER_ID,
+  SCOPES
 });
 
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
@@ -26,8 +27,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
   const [gapiInited, setGapiInited] = useState(false);
   const [gisInited, setGisInited] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [uploadedFileInfo, setUploadedFileInfo] = useState(null);
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
@@ -63,23 +62,28 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         const origin = window.location.origin;
         console.log('Current origin:', origin);
 
-        // Initialize token client with minimal configuration
-        const tokenClientConfig = {
-          client_id: CLIENT_ID,
-          scope: SCOPES,
-          callback: '', // Will be set later
-          error_callback: (error) => {
-            console.error('OAuth error:', error);
-            console.log('Error details:', JSON.stringify(error, null, 2));
-            toast.error(`Authentication error: ${error.error || 'Unknown error'}`);
-          }
+        const initializeTokenClient = () => {
+          if (!window.google || !CLIENT_ID) return;
+
+          console.log('Current origin:', window.location.origin);
+          const config = {
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: '', // defined at request time
+            prompt: 'consent',
+            access_type: 'offline'
+          };
+          
+          console.log('Initializing token client with config:', config);
+
+          const client = window.google.accounts.oauth2.initTokenClient(config);
+
+          setTokenClient(client);
+          console.log('Token client initialized');
+          setGisInited(true);
         };
 
-        console.log('Initializing token client with config:', tokenClientConfig);
-        const client = window.google.accounts.oauth2.initTokenClient(tokenClientConfig);
-        console.log('Token client initialized');
-        setTokenClient(client);
-        setGisInited(true);
+        initializeTokenClient();
       } catch (error) {
         console.error('Error in GAPI initialization:', error);
         if (error.details?.includes('oauth2')) {
@@ -173,13 +177,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
 
-      // Create file metadata
-      const metadata = {
-        name: filename,
-        mimeType: 'application/pdf',
-        parents: [FOLDER_ID]
-      };
-
       // Read file as ArrayBuffer
       const content = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -190,121 +187,68 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       setUploadProgress(30);
 
-      console.log('Starting Google Drive upload...');
-      console.log('Folder ID:', FOLDER_ID);
-      console.log('Metadata:', metadata);
-      
-      if (!FOLDER_ID) {
-        throw new Error('Google Drive folder ID is not configured');
-      }
-
-      const accessToken = window.gapi.client.getToken()?.access_token;
-      if (!accessToken) {
-        throw new Error('No access token available. Please sign in again.');
-      }
-      console.log('Access token available:', !!accessToken);
-
-      // Create file metadata
-      const fileMetadata = {
-        name: filename,
-        mimeType: 'application/pdf',
-        parents: [FOLDER_ID]
-      };
-
       console.log('Creating file in Google Drive...');
       
-      // Create file with metadata
-      const createRequest = window.gapi.client.drive.files.create({
-        resource: fileMetadata,
-        fields: 'id, name, webViewLink'
-      });
-
-      const createResponse = await new Promise((resolve, reject) => {
-        createRequest.execute(response => {
-          if (response.error) {
-            console.error('Error creating file:', response.error);
-            reject(new Error('Could not create file'));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      console.log('File created:', createResponse);
-      const fileId = createResponse.id;
-      
-      // Now upload the content
-      const media = new Blob([content], { type: 'application/pdf' });
-      
-      console.log('Uploading file content...');
-      const response = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/pdf'
-          },
-          body: media
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Upload failed with status:', response.status);
-        console.error('Error response:', errorText);
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('File uploaded successfully:', data);
-      
-      // Verify the file exists in the folder
-      console.log('Verifying file in folder:', FOLDER_ID);
-      
       try {
-        // Check for the file using list with folder as parent
-        const fileListRequest = window.gapi.client.drive.files.list({
-          q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
-          fields: 'files(id, name, webViewLink)',
-          spaces: 'drive'
+        // Create file metadata
+        const fileMetadata = {
+          name: filename,
+          mimeType: 'application/pdf',
+          parents: [FOLDER_ID]
+        };
+
+        // Create file with metadata using multipart upload
+        const boundary = '-------314159265358979323846';
+        const delimiter = "\r\n--" + boundary + "\r\n";
+        const close_delim = "\r\n--" + boundary + "--";
+
+        const contentType = 'application/pdf';
+        const metadata = JSON.stringify(fileMetadata);
+        
+        const multipartRequestBody =
+          delimiter +
+          'Content-Type: application/json\r\n\r\n' +
+          metadata +
+          delimiter +
+          'Content-Type: ' + contentType + '\r\n\r\n' +
+          content +
+          close_delim;
+
+        const request = window.gapi.client.request({
+          'path': '/upload/drive/v3/files',
+          'method': 'POST',
+          'params': {'uploadType': 'multipart'},
+          'headers': {
+            'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+          },
+          'body': multipartRequestBody
         });
 
-        const fileListResponse = await new Promise((resolve, reject) => {
-          fileListRequest.execute(response => {
-            if (response.error) {
-              console.error('Error listing files:', response.error);
-              reject(new Error('Could not list files in folder'));
+        console.log('Sending request to Google Drive...');
+        const response = await new Promise((resolve, reject) => {
+          request.execute(resp => {
+            if (resp.error) {
+              console.error('Upload error:', resp.error);
+              reject(resp.error);
             } else {
-              resolve(response);
+              resolve(resp);
             }
           });
         });
-      
-        const files = fileListResponse.files;
-        console.log('Files found in folder:', files);
-        
-        if (!files || files.length === 0) {
-          console.warn('File was uploaded but not found in the specified folder');
-          // Don't throw, just show a warning
-          toast.error('File uploaded but folder verification failed');
-        } else {
-          setUploadProgress(100);
-          setUploadedFileInfo({
-            fileId: fileId,
-            fileName: filename,
-            uploadTime: new Date().toLocaleString()
-          });
-          setShowSuccessModal(true);
-        }
-      } catch (verifyError) {
-        console.error('Verification error:', verifyError);
-        // Don't throw here since file is already uploaded
-        toast.error('File uploaded but verification failed');
+
+        console.log('File uploaded successfully:', response);
+        setUploadProgress(100);
+        toast.success(`Assignment submitted successfully! File ID: ${response.id}`);
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(`Upload failed: ${error.message || 'Unknown error'}`);
+        throw error;
       }
 
       // Store submission locally
       const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
       submissions.push({
-        id: data.id,
+        id: response.id,
         assignmentId,
         enrollmentNo,
         studentName,
@@ -343,35 +287,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   return (
     <>
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg max-w-lg w-full mx-4 relative">
-            <button 
-              onClick={() => setShowSuccessModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-            >
-              ×
-            </button>
-            <div className="text-center">
-              <div className="mb-4 text-green-500 text-6xl">✓</div>
-              <h2 className="text-2xl font-bold mb-4 text-green-600">Assignment Uploaded Successfully!</h2>
-              {uploadedFileInfo && (
-                <div className="text-left mb-6 bg-gray-50 p-4 rounded">
-                  <p className="mb-2"><span className="font-semibold">File Name:</span> {uploadedFileInfo.fileName}</p>
-                  <p className="mb-2"><span className="font-semibold">File ID:</span> {uploadedFileInfo.fileId}</p>
-                  <p><span className="font-semibold">Upload Time:</span> {uploadedFileInfo.uploadTime}</p>
-                </div>
-              )}
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       <Script
         src="https://apis.google.com/js/api.js"
         strategy="afterInteractive"
