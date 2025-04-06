@@ -3,13 +3,13 @@ import { Toaster } from 'react-hot-toast';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-green-100">
       <header className="bg-green-600 shadow-md text-white">
         <div className="container mx-auto px-4 py-6">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-display font-bold text-primary-600"
+            className="text-3xl md:text-4xl font-display font-bold text-white"
           >
             Jaimin Patel
           </motion.h1>
@@ -28,8 +28,8 @@ export default function Layout({ children }) {
         {children}
       </main>
 
-      <footer className="bg-white border-t mt-auto">
-        <div className="container mx-auto px-4 py-6 text-center text-gray-600">
+      <footer className="bg-white border-t mt-auto fixed bottom-0 w-full">
+        <div className="container mx-auto px-4 py-4 text-center text-gray-600">
           © {new Date().getFullYear()} Jaimin Patel. All rights reserved.
         </div>
       </footer>

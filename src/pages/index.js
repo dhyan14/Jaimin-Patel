@@ -42,6 +42,34 @@ export default function Home() {
     return contentType === 'assignments' ? assignmentsData : coursesData;
   };
 
+  const renderAssignments = () => {
+    return (
+      <div className="space-y-6">
+        <motion.h2
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-2xl font-display font-bold text-gray-900"
+        >
+          Available Assignments
+        </motion.h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(assignmentsData).map(([key, assignment]) => (
+            <Card
+              key={key}
+              title={assignment.title}
+              subtitle={assignment.description}
+              onClick={() => {
+                // Handle download when URL is available
+                toast.success('Download feature coming soon!');
+              }}
+              icon={DocumentTextIcon}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (!contentType) {
       return (
@@ -56,6 +84,10 @@ export default function Home() {
           <Navigation onSelect={setContentType} />
         </div>
       );
+    }
+
+    if (contentType === 'assignments') {
+      return renderAssignments();
     }
 
     if (!selectedCourse) {

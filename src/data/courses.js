@@ -1,8 +1,8 @@
 export const assignmentsData = {
-  "B.Tech": {
-    "Sem-I": {
-      "Assignment 3.1": "https://drive.google.com/file/d/11iSgkma5b018OCZbPDuHO3k9DvwDAzb-/view?usp=sharing"
-    }
+  "Assignment 3.1": {
+    title: "Assignment 3.1",
+    description: "Click to download",
+    downloadUrl: "#" // Add the actual download URL when available
   }
 };
 
