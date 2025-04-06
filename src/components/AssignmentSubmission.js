@@ -2,37 +2,49 @@ import { useState, useRef, useEffect } from 'react';
 import { students } from '../data/students';
 import toast from 'react-hot-toast';
 import Script from 'next/script';
+import { format } from 'date-fns';
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_FOLDER_ID;
-
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
-  // Add Google API scripts
+  const [scriptsLoaded, setScriptsLoaded] = useState(false);
+  const [gapiInited, setGapiInited] = useState(false);
+  const [gisInited, setGisInited] = useState(false);
+  const [tokenClient, setTokenClient] = useState(null);
+
+  // Initialize Google APIs after scripts are loaded
   useEffect(() => {
-    // Add Google API script
-    const script1 = document.createElement('script');
-    script1.src = 'https://apis.google.com/js/api.js';
-    script1.async = true;
-    script1.defer = true;
-    document.body.appendChild(script1);
+    if (!scriptsLoaded || !window.gapi || !window.google) return;
 
-    // Add Google Identity Services script
-    const script2 = document.createElement('script');
-    script2.src = 'https://accounts.google.com/gsi/client';
-    script2.async = true;
-    script2.defer = true;
-    document.body.appendChild(script2);
+    const initializeGoogleAPIs = async () => {
+      try {
+        // Initialize GAPI client
+        await window.gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: DISCOVERY_DOCS,
+        });
+        setGapiInited(true);
 
-    return () => {
-      // Cleanup scripts when component unmounts
-      document.body.removeChild(script1);
-      document.body.removeChild(script2);
+        // Initialize token client
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          callback: '', // Will be set later
+        });
+        setTokenClient(client);
+        setGisInited(true);
+      } catch (error) {
+        console.error('Error initializing Google APIs:', error);
+        toast.error('Failed to initialize Google Drive integration');
+      }
     };
-  }, []);
+
+    window.gapi.load('client', initializeGoogleAPIs);
+  }, [scriptsLoaded]);
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
   const [file, setFile] = useState(null);
@@ -71,36 +83,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
     setIsOverdue(now > dueDateObj);
   }, [dueDate]);
 
-  const [tokenClient, setTokenClient] = useState(null);
-  const [gapiInited, setGapiInited] = useState(false);
-  const [gisInited, setGisInited] = useState(false);
-
-  useEffect(() => {
-    // Initialize the Google API client
-    const initializeGapiClient = async () => {
-      await window.gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: DISCOVERY_DOCS,
-      });
-      setGapiInited(true);
-    };
-
-    // Load the Google API client
-    if (window.gapi) {
-      window.gapi.load('client', initializeGapiClient);
-    }
-
-    // Initialize the token client
-    if (window.google) {
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '', // Will be set later
-      });
-      setTokenClient(client);
-      setGisInited(true);
-    }
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -210,7 +192,24 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
   const isReady = gapiInited && gisInited && tokenClient;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
+    <>
+      <Script
+        src="https://apis.google.com/js/api.js"
+        strategy="beforeInteractive"
+        onLoad={() => {
+          console.log('Google API script loaded');
+          if (window.google) setScriptsLoaded(true);
+        }}
+      />
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        strategy="beforeInteractive"
+        onLoad={() => {
+          console.log('Google Identity Services script loaded');
+          if (window.gapi) setScriptsLoaded(true);
+        }}
+      />
+      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
       {!isReady && (
         <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
           <div className="text-center">
@@ -298,5 +297,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         </button>
       </form>
     </div>
+    </>
   );
 }
