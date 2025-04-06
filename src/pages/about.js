@@ -42,7 +42,7 @@ export default function About() {
             />
           </div>
           <h1 className="text-4xl font-display font-bold text-gray-900 mb-4">
-            Mr. Jaimin Patel
+            Jaimin Patel
           </h1>
           <p className="text-xl text-green-600 font-medium mb-6">
             Assistant Professor
