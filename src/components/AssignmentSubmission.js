@@ -206,10 +206,17 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       
       // First verify folder permissions
       try {
-        const folderPermissions = await window.gapi.client.drive.files.get({
-          fileId: FOLDER_ID,
-          fields: 'capabilities'
+        const folderPermissions = await new Promise((resolve, reject) => {
+          window.gapi.client.drive.files.get({
+            fileId: FOLDER_ID,
+            fields: 'capabilities'
+          }).then(response => {
+            resolve(response);
+          }, error => {
+            reject(error);
+          });
         });
+        
         console.log('Folder permissions:', folderPermissions.result.capabilities);
         
         if (!folderPermissions.result.capabilities?.canAddChildren) {
@@ -224,23 +231,76 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       }
       
       // Create file without specifying parent first
-      const createResponse = await window.gapi.client.drive.files.create({
-        resource: {
-          name: filename,
-          mimeType: 'application/pdf'
-        },
-        fields: 'id, name, webViewLink'
+      const createResponse = await new Promise((resolve, reject) => {
+        window.gapi.client.drive.files.create({
+          resource: {
+            name: filename,
+            mimeType: 'application/pdf'
+          },
+          fields: 'id, name, webViewLink'
+        }).then(response => {
+          resolve(response);
+        }, error => {
+          reject(error);
+        });
       });
       
       // Then move it to the target folder
       const fileId = createResponse.result.id;
       try {
-        await window.gapi.client.drive.files.update({
-          fileId: fileId,
-          addParents: FOLDER_ID,
-          fields: 'id, parents'
+        await new Promise((resolve, reject) => {
+          window.gapi.client.drive.files.update({
+            fileId: fileId,
+            addParents: FOLDER_ID,
+            fields: 'id, parents'
+          }).then(response => {
+            resolve(response);
+          }, error => {
+            reject(error);
+          });
         });
         console.log('File moved to target folder');
+
+        // Verify the file exists in the folder
+        console.log('Verifying file in folder...');
+        const fileListResponse = await new Promise((resolve, reject) => {
+          window.gapi.client.drive.files.list({
+            q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+            fields: 'files(id, name, webViewLink)',
+            spaces: 'drive'
+          }).then(response => {
+            resolve(response);
+          }, error => {
+            reject(error);
+          });
+        });
+        
+        const files = fileListResponse.result.files;
+        console.log('Files found in folder:', files);
+        
+        if (!files || files.length === 0) {
+          throw new Error('File was uploaded but not found in the specified folder');
+        }
+        
+        setUploadProgress(100);
+        toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
+
+        // Store submission locally
+        const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+        submissions.push({
+          filename,
+          fileId,
+          timestamp: new Date().toISOString(),
+          webViewLink: files[0].webViewLink
+        });
+        localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+        
+        // Reset form
+        setFile(null);
+        setUploadProgress(0);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } catch (error) {
         console.error('Error moving file to target folder:', error);
         throw error;
@@ -271,57 +331,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       const data = await response.json();
       console.log('File uploaded successfully:', data);
-      
-      // Verify the file exists in the folder
-      console.log('Verifying file in folder:', FOLDER_ID);
-      
-      // First verify folder exists
-      const folderResponse = await window.gapi.client.drive.files.get({
-        fileId: FOLDER_ID,
-        fields: 'id, name'
-      }).catch(error => {
-        console.error('Error checking folder:', error);
-        throw new Error('Could not verify folder exists');
-      });
-      
-      console.log('Found folder:', folderResponse.result);
-      
-      // Now check for the file
-      const fileListResponse = await window.gapi.client.drive.files.list({
-        q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
-        fields: 'files(id, name, webViewLink)',
-        spaces: 'drive'
-      });
-      
-      const files = fileListResponse.result.files;
-      console.log('Files found in folder:', files);
-      
-      if (!files || files.length === 0) {
-        throw new Error('File was uploaded but not found in the specified folder');
-      }
-      
-      setUploadProgress(100);
-      toast.success(`Assignment submitted successfully! File ID: ${data.id}`);
-
-      // Store submission locally
-      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
-      submissions.push({
-        id: data.id,
-        assignmentId,
-        enrollmentNo,
-        studentName,
-        fileName: filename,
-        timestamp: new Date().toISOString(),
-        status: 'success'
-      });
-      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
-
-      // Reset form
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      setUploadProgress(0);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload assignment. Please try again.');
