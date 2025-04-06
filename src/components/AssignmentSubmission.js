@@ -23,62 +23,67 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       API_KEY,
       FOLDER_ID
     });
-    console.log('Scripts loaded state:', scriptsLoaded);
-    console.log('GAPI available:', !!window.gapi);
-    console.log('Google available:', !!window.google);
-
-    if (!scriptsLoaded || !window.gapi || !window.google) return;
 
     const initializeGoogleAPIs = async () => {
+      if (!window.gapi || !window.google) {
+        console.log('Google APIs not yet available');
+        return;
+      }
+
       try {
         console.log('Initializing Google APIs...');
-        // Initialize GAPI client
-        await window.gapi.load('client', async () => {
-          try {
-            await window.gapi.client.init({
-              apiKey: API_KEY,
-              discoveryDocs: DISCOVERY_DOCS,
-            });
-            console.log('GAPI client initialized');
-            setGapiInited(true);
+        await new Promise((resolve, reject) => {
+          window.gapi.load('client', {
+            callback: resolve,
+            onerror: reject
+          });
+        });
 
-            // Initialize token client with explicit origin
-            const origin = typeof window !== 'undefined' ? window.location.origin : 'https://jaiminpatel-1.vercel.app';
-            console.log('Using origin:', origin);
-            
-            const client = window.google.accounts.oauth2.initTokenClient({
-              client_id: CLIENT_ID,
-              scope: SCOPES,
-              callback: '', // Will be set later
-              error_callback: (error) => {
-                console.error('OAuth error:', error);
-                if (error.error === 'idpiframe_initialization_failed') {
-                  toast.error('OAuth initialization failed. Please ensure your domain is registered in Google Cloud Console.');
-                } else {
-                  toast.error(`Authentication error: ${error.error}`);
-                }
-              },
-              hosted_domain: origin
-            });
-            console.log('Token client initialized');
-            setTokenClient(client);
-            setGisInited(true);
-          } catch (error) {
-            console.error('Error in GAPI initialization:', error);
-            if (error.details?.includes('oauth2')) {
-              toast.error('OAuth configuration error. Please check your Google Cloud Console settings.');
+        await window.gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: DISCOVERY_DOCS,
+        });
+        console.log('GAPI client initialized');
+        setGapiInited(true);
+
+        // Get the current origin
+        const origin = window.location.origin;
+        console.log('Current origin:', origin);
+
+        // Initialize token client
+        const tokenClientConfig = {
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          callback: '', // Will be set later
+          error_callback: (error) => {
+            console.error('OAuth error:', error);
+            console.log('Error details:', JSON.stringify(error, null, 2));
+            if (error.error === 'idpiframe_initialization_failed') {
+              toast.error(`OAuth initialization failed. Origin: ${origin}. Please ensure this domain is registered in Google Cloud Console.`);
             } else {
-              toast.error('Failed to initialize Google Drive integration');
+              toast.error(`Authentication error: ${error.error}`);
             }
           }
-        });
+        };
+
+        console.log('Initializing token client with config:', tokenClientConfig);
+        const client = window.google.accounts.oauth2.initTokenClient(tokenClientConfig);
+        console.log('Token client initialized');
+        setTokenClient(client);
+        setGisInited(true);
       } catch (error) {
-        console.error('Error loading GAPI client:', error);
-        toast.error('Failed to load Google Drive client');
+        console.error('Error in GAPI initialization:', error);
+        if (error.details?.includes('oauth2')) {
+          toast.error('OAuth configuration error. Please check your Google Cloud Console settings.');
+        } else {
+          toast.error('Failed to initialize Google Drive integration');
+        }
       }
     };
 
-    initializeGoogleAPIs();
+    if (scriptsLoaded) {
+      initializeGoogleAPIs();
+    }
   }, [scriptsLoaded]);
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
