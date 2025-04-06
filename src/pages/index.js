@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRightIcon, BookOpenIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import MathEquation from '../components/MathEquation';
 import 'katex/dist/katex.min.css';
 
 export default function Home() {
@@ -23,9 +24,9 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
-            <p className="math-equation text-2xl">
-              {'Where \(f(\text{passion}) = \int_{\text{knowledge}}^{\text{innovation}} \text{creativity} \, dx\)'}
-            </p>
+            <MathEquation>
+              {'Where f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, dx'}
+            </MathEquation>
           </motion.div>
         </div>
 
