@@ -10,6 +10,15 @@ const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_FOLDER_ID;
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
+// Log environment variables in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('Environment Variables:', {
+    CLIENT_ID,
+    API_KEY,
+    FOLDER_ID,
+  });
+}
+
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [gapiInited, setGapiInited] = useState(false);
@@ -50,7 +59,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         const origin = window.location.origin;
         console.log('Current origin:', origin);
 
-        // Initialize token client
+        // Initialize token client with minimal configuration
         const tokenClientConfig = {
           client_id: CLIENT_ID,
           scope: SCOPES,
@@ -58,16 +67,8 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           error_callback: (error) => {
             console.error('OAuth error:', error);
             console.log('Error details:', JSON.stringify(error, null, 2));
-            if (error.error === 'idpiframe_initialization_failed') {
-              toast.error(`OAuth initialization failed. Origin: ${origin}. Please ensure this domain is registered in Google Cloud Console.`);
-            } else if (error.error === 'redirect_uri_mismatch') {
-              toast.error('Redirect URI mismatch. Please check Google Cloud Console configuration.');
-            } else {
-              toast.error(`Authentication error: ${error.error}`);
-            }
-          },
-          ux_mode: 'popup',
-          redirect_uri: `${window.location.origin}/resources`
+            toast.error(`Authentication error: ${error.error || 'Unknown error'}`);
+          }
         };
 
         console.log('Initializing token client with config:', tokenClientConfig);
