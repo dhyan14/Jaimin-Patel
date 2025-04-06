@@ -13,5 +13,5 @@ export default function MathEquation({ children }) {
     }
   }, [children]);
 
-  return <div ref={containerRef} className="math-equation text-2xl" />;
+  return <div ref={containerRef} className="math-equation text-sm sm:text-xl md:text-2xl" />;
 }

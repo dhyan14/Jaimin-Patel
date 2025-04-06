@@ -13,7 +13,7 @@ export default function About() {
     {
       icon: BriefcaseIcon,
       title: 'Academic Experience',
-      content: '6 Months',
+      content: '2 Years',
     },
     {
       icon: EnvelopeIcon,
@@ -66,7 +66,15 @@ export default function About() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {detail.title}
                 </h3>
-                <p className="text-gray-600">{detail.content}</p>
+                <p className="text-gray-600">
+                  {detail.title === 'Contact' ? (
+                    <a href={`mailto:${detail.content}`} className="hover:text-green-600 transition-colors">
+                      {detail.content}
+                    </a>
+                  ) : (
+                    detail.content
+                  )}
+                </p>
               </div>
             </motion.div>
           ))}
@@ -84,14 +92,11 @@ export default function About() {
           </h2>
           <div className="prose prose-green max-w-none">
             <p>
-              As an Assistant Professor with expertise in Mathematics and Engineering,
-              I am dedicated to providing quality education and resources to my students.
-              This platform serves as a centralized hub for accessing course materials,
-              assignments, and other educational resources.
+              As an Assistant Professor with expertise in Mathematics, I am dedicated to providing quality education and resources to my students.
+              This platform serves as a centralized hub for accessing course materials, assignments, and other educational resources.
             </p>
             <p className="mt-4">
-              Feel free to explore the resources section where you'll find comprehensive
-              study materials and assignments designed to enhance your learning experience.
+              Feel free to explore the resources section where you'll find comprehensive study materials and assignments designed to enhance your learning experience.
             </p>
           </div>
         </motion.div>

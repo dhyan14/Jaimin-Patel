@@ -226,7 +226,7 @@ export default function Resources() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        {(selectedCourse || selectedSemester || selectedUnit) && (
+        {(contentType || selectedCourse || selectedSemester || selectedUnit) && (
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
