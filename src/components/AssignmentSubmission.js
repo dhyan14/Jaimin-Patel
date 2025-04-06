@@ -135,39 +135,67 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploadProgress(0);
 
-    if (!file) {
-      toast.error('Please select a file');
+    if (!enrollmentNo || !studentName || !file) {
+      toast.error('Please fill all the required fields');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    if (isOverdue) {
+      toast.error('Assignment submission is closed as the due date has passed.');
       return;
     }
 
     try {
-      // Get assignment ID from URL or props
-      const assignmentNumber = assignmentUrl?.split('/')?.[4]?.split('.')?.[0] || assignmentId;
-      if (!assignmentNumber) {
-        toast.error('Could not determine assignment number');
-        return;
-      }
-
       setUploadProgress(10);
 
       // Check if we need to get access token
       if (!window.gapi.client.getToken()) {
-        try {
-          const response = await new Promise((resolve, reject) => {
-            tokenClient.callback = (resp) => {
-              if (resp.error) {
-                reject(resp);
-              }
+        await new Promise((resolve, reject) => {
+          tokenClient.callback = (resp) => {
+            if (resp.error) {
+              reject(resp);
+            } else {
               resolve(resp);
-            };
-            tokenClient.requestAccessToken();
-          });
-          console.log('Got new access token:', response);
-        } catch (err) {
-          console.error('Error getting access token:', err);
-          throw new Error('Failed to get access token. Please try again.');
-        }
+            }
+          };
+          tokenClient.requestAccessToken({ prompt: 'consent' });
+        });
+      }
+
+      // Generate a unique filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+
+      // Create file metadata
+      const metadata = {
+        name: filename,
+        mimeType: 'application/pdf',
+        parents: [FOLDER_ID]
+      };
+
+      // Read file as ArrayBuffer
+      const content = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsArrayBuffer(file);
+      });
+
+      setUploadProgress(30);
+
+      console.log('Starting Google Drive upload...');
+      console.log('Folder ID:', FOLDER_ID);
+      console.log('Metadata:', metadata);
+      
+      if (!FOLDER_ID) {
+        throw new Error('Google Drive folder ID is not configured');
       }
 
       const accessToken = window.gapi.client.getToken()?.access_token;
@@ -176,116 +204,122 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       }
       console.log('Access token available:', !!accessToken);
 
-      // Create file metadata with proper name
+      // Create file metadata
       const fileMetadata = {
-        name: `Assignment ${assignmentNumber}.pdf`,
+        name: filename,
         mimeType: 'application/pdf',
         parents: [FOLDER_ID]
       };
 
       console.log('Creating file in Google Drive...');
       
-      try {
-        // First create empty file
-        const createRequest = await window.gapi.client.drive.files.create({
-          resource: fileMetadata,
-          fields: 'id, name, webViewLink'
-        });
+      // Create file with metadata
+      const createRequest = window.gapi.client.drive.files.create({
+        resource: fileMetadata,
+        fields: 'id, name, webViewLink'
+      });
 
-        const fileId = createRequest.result.id;
-        console.log('Empty file created:', createRequest.result);
-
-        // Now upload content
-        console.log('Uploading file content...');
-        const response = await fetch(
-          `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/pdf'
-            },
-            body: file
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Upload failed with status:', response.status);
-          console.error('Error response:', errorText);
-          throw new Error(`Upload failed: ${response.status} ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('File uploaded successfully:', data);
-
-        // Verify the file exists in the folder
-        console.log('Verifying file in folder:', FOLDER_ID);
-
-        try {
-          // Check for the file using list with folder as parent
-          const fileListRequest = window.gapi.client.drive.files.list({
-            q: `'${FOLDER_ID}' in parents and name = '${fileMetadata.name}'`,
-            fields: 'files(id, name, webViewLink)',
-            spaces: 'drive'
-          });
-
-          const fileListResponse = await new Promise((resolve, reject) => {
-            fileListRequest.execute(response => {
-              if (response.error) {
-                console.error('Error listing files:', response.error);
-                reject(new Error('Could not list files in folder'));
-              } else {
-                resolve(response);
-              }
-            });
-          });
-
-          const files = fileListResponse.files;
-          console.log('Files found in folder:', files);
-
-          if (!files || files.length === 0) {
-            console.warn('File was uploaded but not found in the specified folder');
-            // Don't throw, just show a warning
-            toast.error('File uploaded but folder verification failed');
+      const createResponse = await new Promise((resolve, reject) => {
+        createRequest.execute(response => {
+          if (response.error) {
+            console.error('Error creating file:', response.error);
+            reject(new Error('Could not create file'));
           } else {
-            setUploadProgress(100);
-            setUploadedFileInfo({
-              fileId: fileId,
-              fileName: fileMetadata.name,
-              assignmentNumber: assignmentNumber,
-              uploadTime: new Date().toLocaleString()
-            });
-            setShowSuccessModal(true);
+            resolve(response);
           }
-        } catch (verifyError) {
-          console.error('Verification error:', verifyError);
-          // Don't throw here since file is already uploaded
-          toast.error('File uploaded but verification failed');
-        }
-
-        // Store submission locally
-        const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
-        submissions.push({
-          id: data.id,
-          assignmentId,
-          enrollmentNo,
-          studentName,
-          fileName: fileMetadata.name,
-          timestamp: new Date().toISOString(),
-          status: 'success'
         });
-        localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+      });
+      
+      console.log('File created:', createResponse);
+      const fileId = createResponse.id;
+      
+      // Now upload the content
+      const media = new Blob([content], { type: 'application/pdf' });
+      
+      console.log('Uploading file content...');
+      const response = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/pdf'
+          },
+          body: media
+      });
 
-        // Reset form
-        setFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        setUploadProgress(0);
-      } catch (error) {
-        console.error('Upload error:', error);
-        toast.error('Failed to upload assignment. Please try again.');
-        setUploadProgress(0);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status);
+        console.error('Error response:', errorText);
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
       }
+
+      const data = await response.json();
+      console.log('File uploaded successfully:', data);
+      
+      // Verify the file exists in the folder
+      console.log('Verifying file in folder:', FOLDER_ID);
+      
+      try {
+        // Check for the file using list with folder as parent
+        const fileListRequest = window.gapi.client.drive.files.list({
+          q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+          fields: 'files(id, name, webViewLink)',
+          spaces: 'drive'
+        });
+
+        const fileListResponse = await new Promise((resolve, reject) => {
+          fileListRequest.execute(response => {
+            if (response.error) {
+              console.error('Error listing files:', response.error);
+              reject(new Error('Could not list files in folder'));
+            } else {
+              resolve(response);
+            }
+          });
+        });
+      
+        const files = fileListResponse.files;
+        console.log('Files found in folder:', files);
+        
+        if (!files || files.length === 0) {
+          console.warn('File was uploaded but not found in the specified folder');
+          // Don't throw, just show a warning
+          toast.error('File uploaded but folder verification failed');
+        } else {
+          setUploadProgress(100);
+          setUploadedFileInfo({
+            fileId: fileId,
+            fileName: filename,
+            uploadTime: new Date().toLocaleString()
+          });
+          setShowSuccessModal(true);
+        }
+      } catch (verifyError) {
+        console.error('Verification error:', verifyError);
+        // Don't throw here since file is already uploaded
+        toast.error('File uploaded but verification failed');
+      }
+
+      // Store submission locally
+      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+      submissions.push({
+        id: data.id,
+        assignmentId,
+        enrollmentNo,
+        studentName,
+        fileName: filename,
+        timestamp: new Date().toISOString(),
+        status: 'success'
+      });
+      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+
+      // Reset form
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setUploadProgress(0);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload assignment. Please try again.');
@@ -312,7 +346,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg max-w-lg w-full mx-4 relative">
-            <button
+            <button 
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
@@ -323,7 +357,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
               <h2 className="text-2xl font-bold mb-4 text-green-600">Assignment Uploaded Successfully!</h2>
               {uploadedFileInfo && (
                 <div className="text-left mb-6 bg-gray-50 p-4 rounded">
-                  <p className="mb-2"><span className="font-semibold">Assignment:</span> {uploadedFileInfo.assignmentNumber}</p>
                   <p className="mb-2"><span className="font-semibold">File Name:</span> {uploadedFileInfo.fileName}</p>
                   <p className="mb-2"><span className="font-semibold">File ID:</span> {uploadedFileInfo.fileId}</p>
                   <p><span className="font-semibold">Upload Time:</span> {uploadedFileInfo.uploadTime}</p>
@@ -356,93 +389,93 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         }}
       />
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
-        {!isReady && (
-          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
-              <p>Loading Google Drive integration...</p>
-            </div>
+      {!isReady && (
+        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+            <p>Loading Google Drive integration...</p>
+          </div>
+        </div>
+      )}
+      <div className="mb-8 flex space-x-4">
+        <a
+          href={assignmentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg text-center hover:bg-green-700 transition-colors"
+        >
+          Download Assignment
+        </a>
+        <button
+          onClick={() => document.getElementById('assignmentForm').scrollIntoView({ behavior: 'smooth' })}
+          className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Submit Assignment
+        </button>
+      </div>
+
+      {isOverdue ? (
+        <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+          <strong className="font-bold">Submission Closed!</strong>
+          <p>The due date ({format(new Date(dueDate), 'MMMM d, yyyy h:mm a')}) has passed.</p>
+        </div>
+      ) : null}
+
+      <form id="assignmentForm" onSubmit={handleSubmit} className="space-y-6">
+        {uploadProgress > 0 && (
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-green-600 h-2.5 rounded-full"
+              style={{ width: `${uploadProgress}%` }}
+            ></div>
           </div>
         )}
-        <div className="mb-8 flex space-x-4">
-          <a
-            href={assignmentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg text-center hover:bg-green-700 transition-colors"
-          >
-            Download Assignment
-          </a>
-          <button
-            onClick={() => document.getElementById('assignmentForm').scrollIntoView({ behavior: 'smooth' })}
-            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Submit Assignment
-          </button>
+        <div>
+          <label htmlFor="enrollmentNo" className="block text-sm font-medium text-gray-700">
+            Enrollment Number
+          </label>
+          <input
+            type="text"
+            id="enrollmentNo"
+            value={enrollmentNo}
+            onChange={handleEnrollmentChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            required
+          />
         </div>
 
-        {isOverdue ? (
-          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-            <strong className="font-bold">Submission Closed!</strong>
-            <p>The due date ({format(new Date(dueDate), 'MMMM d, yyyy h:mm a')}) has passed.</p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Student Name
+          </label>
+          <div className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+            {studentName || 'Student name will appear here'}
           </div>
-        ) : null}
+        </div>
 
-        <form id="assignmentForm" onSubmit={handleSubmit} className="space-y-6">
-          {uploadProgress > 0 && (
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-green-600 h-2.5 rounded-full"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-          )}
-          <div>
-            <label htmlFor="enrollmentNo" className="block text-sm font-medium text-gray-700">
-              Enrollment Number
-            </label>
-            <input
-              type="text"
-              id="enrollmentNo"
-              value={enrollmentNo}
-              onChange={handleEnrollmentChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-              required
-            />
-          </div>
+        <div>
+          <label htmlFor="file" className="block text-sm font-medium text-gray-700">
+            Upload Assignment (PDF only, max 10MB)
+          </label>
+          <input
+            type="file"
+            id="file"
+            ref={fileInputRef}
+            accept="application/pdf"
+            onChange={handleFileChange}
+            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+            required
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Student Name
-            </label>
-            <div className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-              {studentName || 'Student name will appear here'}
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="file" className="block text-sm font-medium text-gray-700">
-              Upload Assignment (PDF only, max 10MB)
-            </label>
-            <input
-              type="file"
-              id="file"
-              ref={fileInputRef}
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-          >
-            Submit Assignment
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+        >
+          Submit Assignment
+        </button>
+      </form>
+    </div>
     </>
   );
 }
