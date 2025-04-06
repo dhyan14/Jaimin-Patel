@@ -20,13 +20,14 @@ export default function Header() {
     <header className="bg-green-600 shadow-md text-white">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-6">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-display font-bold text-white"
+            className="flex items-center space-x-2"
           >
-            <Link href="/">
-              Jaimin Patel
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="text-3xl font-bold">∫</span>
+              <span className="text-2xl font-display font-bold">Jaimin Patel</span>
             </Link>
           </motion.h1>
 
