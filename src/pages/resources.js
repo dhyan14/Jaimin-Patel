@@ -6,6 +6,7 @@ import { coursesData, assignmentsData } from '../data/courses';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
 import Navigation from '../components/Navigation';
+import AssignmentSubmission from '../components/AssignmentSubmission';
 
 export default function Resources() {
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -41,7 +42,36 @@ export default function Resources() {
     return contentType === 'assignments' ? assignmentsData : coursesData;
   };
 
+  const [selectedAssignment, setSelectedAssignment] = useState(null);
+
   const renderAssignments = () => {
+    if (selectedAssignment) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-4 mb-6">
+            <button
+              onClick={() => setSelectedAssignment(null)}
+              className="flex items-center text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeftIcon className="h-5 w-5 mr-2" />
+              Back to Assignments
+            </button>
+          </div>
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-2xl font-display font-bold text-gray-900 mb-6"
+          >
+            {selectedAssignment.title}
+          </motion.h2>
+          <AssignmentSubmission 
+            assignmentUrl={selectedAssignment.url}
+            dueDate={selectedAssignment.dueDate}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <motion.h2
@@ -57,9 +87,7 @@ export default function Resources() {
               key={key}
               title={assignment.title}
               subtitle={assignment.description}
-              onClick={() => {
-                toast.success('Download feature coming soon!');
-              }}
+              onClick={() => setSelectedAssignment(assignment)}
               icon={DocumentTextIcon}
             />
           ))}
