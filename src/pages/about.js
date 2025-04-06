@@ -36,13 +36,13 @@ export default function About() {
               src="/jaimin-patel.jpg"
               alt="Mr. Jaimin Patel"
               fill
-              style={{ objectFit: 'cover' }}
+              style={{ objectFit: 'cover', objectPosition: '50% 55%' }}
               priority
               className="rounded-full"
             />
           </div>
           <h1 className="text-4xl font-display font-bold text-gray-900 mb-4">
-            Mr. Jaimin Patel
+            ∫ Mr. Jaimin Patel
           </h1>
           <p className="text-xl text-green-600 font-medium mb-6">
             Assistant Professor

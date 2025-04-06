@@ -14,15 +14,15 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6"
           >
-            Welcome to Jaimin Patel's Portal
+            Welcome To My Math World
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
-            Access educational resources, assignments, and more for B.Tech and MCA courses.
+            Where f(Passion) = ∫<sub>Knowledge</sub><sup>Innovation</sup> Creativity dx
           </motion.p>
         </div>
 
@@ -81,29 +81,7 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Quick Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-center"
-        >
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Quick Links</h2>
-          <div className="inline-flex space-x-4">
-            <Link
-              href="/resources"
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              View Resources
-            </Link>
-            <Link
-              href="/about"
-              className="px-6 py-3 bg-white text-green-600 rounded-lg border border-green-600 hover:bg-green-50 transition-colors"
-            >
-              About Me
-            </Link>
-          </div>
-        </motion.div>
+
       </div>
     </Layout>
   );
