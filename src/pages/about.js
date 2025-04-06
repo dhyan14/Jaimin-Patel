@@ -34,7 +34,7 @@ export default function About() {
           <div className="relative w-48 h-48 mx-auto mb-8 rounded-full overflow-hidden">
             <Image
               src="/jaimin-patel.jpg"
-              alt="Mr. Jaimin Patel"
+              alt="Jaimin Patel"
               fill
               style={{ objectFit: 'cover', objectPosition: '50% 65%' }}
               priority
