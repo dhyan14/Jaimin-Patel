@@ -332,12 +332,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         >
           Download Assignment
         </a>
-        <button
-          onClick={() => document.getElementById('assignmentForm').scrollIntoView({ behavior: 'smooth' })}
-          className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Submit Assignment
-        </button>
       </div>
 
       {isOverdue ? (
@@ -383,15 +377,20 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           <label htmlFor="file" className="block text-sm font-medium text-gray-700">
             Upload Assignment (PDF only, max 10MB)
           </label>
-          <input
-            type="file"
-            id="file"
-            ref={fileInputRef}
-            accept="application/pdf"
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            required
-          />
+          <div className="relative mt-1">
+            <input
+              type="file"
+              id="file"
+              ref={fileInputRef}
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              required
+            />
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500 bg-white">
+              {file ? file.name : 'Choose file...'}
+            </div>
+          </div>
         </div>
 
         <button
