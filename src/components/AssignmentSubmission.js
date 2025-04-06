@@ -188,27 +188,67 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       setUploadProgress(30);
 
-      // Upload to Google Drive
+      console.log('Starting Google Drive upload...');
+      console.log('Folder ID:', FOLDER_ID);
+      console.log('Metadata:', metadata);
+      
+      if (!FOLDER_ID) {
+        throw new Error('Google Drive folder ID is not configured');
+      }
+
+      const accessToken = window.gapi.client.getToken()?.access_token;
+      if (!accessToken) {
+        throw new Error('No access token available. Please sign in again.');
+      }
+      console.log('Access token available:', !!accessToken);
+
+      // Create file metadata
+      const fileMetadata = {
+        name: filename,
+        mimeType: 'application/pdf',
+        parents: [FOLDER_ID]
+      };
+
+      // Create multipart request
       const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
       form.append('file', new Blob([content], { type: 'application/pdf' }));
 
-      const accessToken = window.gapi.client.getToken().access_token;
-      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      console.log('Sending upload request to Google Drive...');
+      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + accessToken
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: form
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status);
+        console.error('Error response:', errorText);
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('File uploaded successfully:', data);
+      
+      // Verify the file exists in the folder
+      console.log('Verifying file in folder...');
+      const fileListResponse = await window.gapi.client.drive.files.list({
+        q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
+        fields: 'files(id, name, webViewLink)'
+      });
+      
+      const files = fileListResponse.result.files;
+      console.log('Files found in folder:', files);
+      
+      if (!files || files.length === 0) {
+        throw new Error('File was uploaded but not found in the specified folder');
+      }
+      
       setUploadProgress(100);
-      toast.success('Assignment submitted successfully!');
+      toast.success(`Assignment submitted successfully! File ID: ${data.id}`);
 
       // Store submission locally
       const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
