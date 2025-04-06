@@ -61,18 +61,18 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate }) {
       formData.append('enrollmentNo', enrollmentNo);
       formData.append('studentName', studentName);
 
+      setUploadProgress(10);
       const response = await fetch('/api/upload', {
         method: 'POST',
-        body: formData,
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        },
+        body: formData
       });
+      setUploadProgress(90);
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
       }
+      const data = await response.json();
 
       toast.success('Assignment submitted successfully!');
       setUploadProgress(0);

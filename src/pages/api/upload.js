@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import { googleConfig } from '../../config/google';
+import path from 'path';
 
 export const config = {
   api: {
@@ -10,10 +11,17 @@ export const config = {
 };
 
 const oauth2Client = new google.auth.OAuth2(
-  googleConfig.clientId,
-  googleConfig.clientSecret,
-  googleConfig.redirectUri
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
 );
+
+// Set credentials directly if you have a refresh token
+if (process.env.GOOGLE_REFRESH_TOKEN) {
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+  });
+}
 
 // Get access token using client credentials
 async function getAccessToken() {
@@ -34,10 +42,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const form = new IncomingForm();
+    // Parse the multipart form data
+    const form = new IncomingForm({
+      uploadDir: path.join(process.cwd(), 'tmp'),
+      keepExtensions: true,
+      multiples: true
+    });
+    
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
+        if (err) {
+          console.error('Form parsing error:', err);
+          reject(err);
+        }
         resolve([fields, files]);
       });
     });
