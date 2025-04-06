@@ -187,9 +187,15 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
       setUploadProgress(30);
 
-      console.log('Creating file in Google Drive...');
+      console.log('Starting file upload...');
       
       try {
+        // First check if we're signed in
+        const token = window.gapi.client.getToken();
+        if (!token) {
+          throw new Error('Not signed in. Please sign in and try again.');
+        }
+
         // Create file metadata
         const fileMetadata = {
           name: filename,
@@ -197,66 +203,75 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           parents: [FOLDER_ID]
         };
 
-        // Create file with metadata using multipart upload
-        const boundary = '-------314159265358979323846';
-        const delimiter = "\r\n--" + boundary + "\r\n";
-        const close_delim = "\r\n--" + boundary + "--";
+        // First create an empty file
+        const createRequest = await window.gapi.client.drive.files.create({
+          resource: fileMetadata,
+          fields: 'id'
+        });
 
-        const contentType = 'application/pdf';
-        const metadata = JSON.stringify(fileMetadata);
-        
-        const multipartRequestBody =
-          delimiter +
-          'Content-Type: application/json\r\n\r\n' +
-          metadata +
-          delimiter +
-          'Content-Type: ' + contentType + '\r\n\r\n' +
-          content +
-          close_delim;
+        if (!createRequest.result || !createRequest.result.id) {
+          throw new Error('Failed to create file');
+        }
 
-        const request = window.gapi.client.request({
-          'path': '/upload/drive/v3/files',
-          'method': 'POST',
-          'params': {'uploadType': 'multipart'},
-          'headers': {
-            'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+        const fileId = createRequest.result.id;
+        console.log('Created empty file:', fileId);
+
+        // Now upload the content
+        const uploadRequest = await window.gapi.client.request({
+          path: `/upload/drive/v3/files/${fileId}`,
+          method: 'PATCH',
+          params: { uploadType: 'media' },
+          headers: {
+            'Content-Type': 'application/pdf',
           },
-          'body': multipartRequestBody
+          body: content
         });
 
-        console.log('Sending request to Google Drive...');
-        const response = await new Promise((resolve, reject) => {
-          request.execute(resp => {
-            if (resp.error) {
-              console.error('Upload error:', resp.error);
-              reject(resp.error);
-            } else {
-              resolve(resp);
-            }
-          });
+        if (!uploadRequest.result) {
+          throw new Error('Failed to upload file content');
+        }
+
+        // Get the final file details
+        const getRequest = await window.gapi.client.drive.files.get({
+          fileId: fileId,
+          fields: 'id,name,webViewLink'
         });
 
-        console.log('File uploaded successfully:', response);
+        const result = getRequest.result;
+        console.log('Upload successful:', result);
+
         setUploadProgress(100);
-        toast.success(`Assignment submitted successfully! File ID: ${response.id}`);
+        toast.success('Assignment submitted successfully!');
+
+        // Store submission locally
+        const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+        submissions.push({
+          id: result.id,
+          assignmentId,
+          enrollmentNo,
+          studentName,
+          filename,
+          submittedAt: new Date().toISOString(),
+          webViewLink: result.webViewLink
+        });
+        localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+
       } catch (error) {
         console.error('Upload error:', error);
-        toast.error(`Upload failed: ${error.message || 'Unknown error'}`);
+        let errorMessage = 'Upload failed: ';
+        
+        if (error.result && error.result.error) {
+          const { code, message } = error.result.error;
+          errorMessage += `${code} - ${message}`;
+        } else if (error.message) {
+          errorMessage += error.message;
+        } else {
+          errorMessage += 'Unknown error occurred';
+        }
+        
+        toast.error(errorMessage);
         throw error;
       }
-
-      // Store submission locally
-      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
-      submissions.push({
-        id: response.id,
-        assignmentId,
-        enrollmentNo,
-        studentName,
-        fileName: filename,
-        timestamp: new Date().toISOString(),
-        status: 'success'
-      });
-      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
 
       // Reset form
       setFile(null);
