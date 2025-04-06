@@ -5,10 +5,13 @@ import toast from 'react-hot-toast';
 import { coursesData, assignmentsData } from '../data/courses';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
-
 import Navigation from '../components/Navigation';
 
-export default function Home() { // 'lectures' or 'assignments'
+export default function Resources() {
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [contentType, setContentType] = useState(null);
 
   const handleReset = () => {
     setSelectedCourse(null);
@@ -30,7 +33,7 @@ export default function Home() { // 'lectures' or 'assignments'
   };
 
   const getEmbedUrl = (url) => {
-    const fileId = url.match(/\/d\/(.*?)\/view/)[1];
+    const fileId = url.match(/\\/d\\/(.*?)\\/view/)[1];
     return `https://drive.google.com/file/d/${fileId}/preview`;
   };
 
@@ -55,7 +58,6 @@ export default function Home() { // 'lectures' or 'assignments'
               title={assignment.title}
               subtitle={assignment.description}
               onClick={() => {
-                // Handle download when URL is available
                 toast.success('Download feature coming soon!');
               }}
               icon={DocumentTextIcon}
@@ -97,7 +99,7 @@ export default function Home() { // 'lectures' or 'assignments'
             Select Your Course
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.keys(getCurrentData()).map((course, index) => (
+            {Object.keys(getCurrentData()).map((course) => (
               <Card
                 key={course}
                 title={course}

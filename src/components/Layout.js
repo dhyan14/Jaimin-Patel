@@ -1,28 +1,10 @@
-import { motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import Header from './Header';
 
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 to-green-100">
-      <header className="bg-green-600 shadow-md text-white">
-        <div className="container mx-auto px-4 py-6">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl md:text-4xl font-display font-bold text-white"
-          >
-            Jaimin Patel
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-2 text-gray-600"
-          >
-            Educational Resources Portal
-          </motion.p>
-        </div>
-      </header>
+      <Header />
       
       <main className="container mx-auto px-4 py-8">
         {children}
