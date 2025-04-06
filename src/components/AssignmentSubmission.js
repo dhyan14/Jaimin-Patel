@@ -202,97 +202,24 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       }
       console.log('Access token available:', !!accessToken);
 
-      console.log('Creating file in Google Drive...');
-      
-      // First verify folder permissions
-      try {
-        const folderPermissions = await new Promise((resolve, reject) => {
-          window.gapi.client.drive.files.get({
-            fileId: FOLDER_ID,
-            fields: 'capabilities'
-          }).then(response => {
-            resolve(response);
-          }, error => {
-            reject(error);
-          });
-        });
-        
-        console.log('Folder permissions:', folderPermissions.result.capabilities);
-        
-        if (!folderPermissions.result.capabilities?.canAddChildren) {
-          throw new Error('You do not have permission to add files to this folder');
-        }
-      } catch (error) {
-        console.error('Error checking folder permissions:', error);
-        if (error.result?.error?.code === 403) {
-          throw new Error('You do not have access to the target folder. Please contact the administrator.');
-        }
-        throw error;
-      }
-      
-      // Create file without specifying parent first
-      const createResponse = await new Promise((resolve, reject) => {
-        window.gapi.client.drive.files.create({
-          resource: {
-            name: filename,
-            mimeType: 'application/pdf'
-          },
-          fields: 'id, name, webViewLink'
-        }).then(response => {
-          resolve(response);
-        }, error => {
-          reject(error);
-        });
+      console.log('Step 1: Creating file...');
+      const createResponse = await window.gapi.client.drive.files.create({
+        resource: {
+          name: filename,
+          mimeType: 'application/pdf'
+        },
+        fields: 'id, name, webViewLink'
       });
       
-      // Then move it to the target folder
-      const fileId = createResponse.result.id;
-      try {
-        await new Promise((resolve, reject) => {
-          window.gapi.client.drive.files.update({
-            fileId: fileId,
-            addParents: FOLDER_ID,
-            fields: 'id, parents'
-          }).then(response => {
-            resolve(response);
-          }, error => {
-            reject(error);
-          });
-        });
-        console.log('File moved to target folder');
-
-        setUploadProgress(100);
-        toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
-
-        // Store submission locally
-        const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
-        submissions.push({
-          filename,
-          fileId,
-          timestamp: new Date().toISOString(),
-          webViewLink: createResponse.result.webViewLink
-        });
-        localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
-        
-        // Reset form
-        setFile(null);
-        setUploadProgress(0);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } catch (error) {
-        console.error('Error moving file to target folder:', error);
-        throw error;
-      }
-      
       console.log('File created:', createResponse.result);
-      
-      // Now upload the content
+      const fileData = createResponse.result;
+      setUploadProgress(50);
+
+      // Upload content
+      console.log('Step 2: Uploading content...');
       const media = new Blob([content], { type: 'application/pdf' });
-      
-      console.log('Uploading file content...');
       const response = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${createResponse.result.id}?uploadType=media`, {
+        `https://www.googleapis.com/upload/drive/v3/files/${fileData.id}?uploadType=media`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -302,14 +229,52 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Upload failed with status:', response.status);
-        console.error('Error response:', errorText);
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+        throw new Error(`Content upload failed: ${response.status}`);
       }
+      setUploadProgress(75);
 
-      const data = await response.json();
-      console.log('File uploaded successfully:', data);
+      // Move to folder
+      console.log('Step 3: Moving to target folder...');
+      await window.gapi.client.drive.files.update({
+        fileId: fileData.id,
+        addParents: FOLDER_ID,
+        fields: 'id, parents, webViewLink'
+      });
+      
+      console.log('File moved to folder successfully');
+      setUploadProgress(90);
+
+      // Store submission details
+      const submissionDetails = {
+        id: fileData.id,
+        assignmentId,
+        enrollmentNo,
+        studentName,
+        fileName: filename,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+        webViewLink: fileData.webViewLink
+      };
+
+      // Save to local storage
+      const submissions = JSON.parse(localStorage.getItem('assignmentSubmissions') || '[]');
+      submissions.push(submissionDetails);
+      localStorage.setItem('assignmentSubmissions', JSON.stringify(submissions));
+      
+      setUploadProgress(100);
+      toast.success('Assignment submitted successfully! 🎉', {
+        duration: 5000,
+        icon: '✅'
+      });
+
+      // Reset form
+      setFile(null);
+      setEnrollmentNo('');
+      setStudentName('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setUploadProgress(0);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload assignment. Please try again.');
