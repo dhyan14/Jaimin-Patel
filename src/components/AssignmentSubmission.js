@@ -259,26 +259,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       console.log('Verifying file in folder:', FOLDER_ID);
       
       try {
-        // First verify folder exists
-        const folderRequest = window.gapi.client.drive.files.get({
-          fileId: FOLDER_ID,
-          fields: 'id, name'
-        });
-
-        const folderResponse = await new Promise((resolve, reject) => {
-          folderRequest.execute(response => {
-            if (response.error) {
-              console.error('Error checking folder:', response.error);
-              reject(new Error('Could not verify folder exists'));
-            } else {
-              resolve(response);
-            }
-          });
-        });
-        
-        console.log('Found folder:', folderResponse);
-        
-        // Now check for the file
+        // Check for the file using list with folder as parent
         const fileListRequest = window.gapi.client.drive.files.list({
           q: `'${FOLDER_ID}' in parents and name = '${filename}'`,
           fields: 'files(id, name, webViewLink)',
@@ -300,15 +281,17 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         console.log('Files found in folder:', files);
         
         if (!files || files.length === 0) {
-          throw new Error('File was uploaded but not found in the specified folder');
+          console.warn('File was uploaded but not found in the specified folder');
+          // Don't throw, just show a warning
+          toast.error('File uploaded but folder verification failed');
+        } else {
+          setUploadProgress(100);
+          toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
         }
-        
-        setUploadProgress(100);
-        toast.success(`Assignment submitted successfully! File ID: ${fileId}`);
       } catch (verifyError) {
         console.error('Verification error:', verifyError);
         // Don't throw here since file is already uploaded
-        toast.warning('File uploaded but verification failed');
+        toast.error('File uploaded but verification failed');
       }
 
       // Store submission locally
