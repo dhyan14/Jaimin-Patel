@@ -25,10 +25,10 @@ export default function Home() {
             className="text-xl text-gray-600 max-w-2xl mx-auto font-math"
           >
             <MathEquation>
-              {'Where f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, dx'}
+              {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, dx'}
             </MathEquation>
           </motion.div>
-        </div>
+        </div>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
