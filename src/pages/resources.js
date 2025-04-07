@@ -67,6 +67,7 @@ export default function Resources() {
           <AssignmentSubmission 
             assignmentUrl={selectedAssignment.url}
             dueDate={selectedAssignment.dueDate}
+            assignmentId={selectedAssignment.title.split(' ')[1]} 
           />
         </div>
       );
