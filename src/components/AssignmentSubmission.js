@@ -168,8 +168,9 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       }
 
       // Generate a unique filename
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${timestamp}.pdf`;
+      const currentDate = format(new Date(), 'yyyyMMdd');
+      const timestamp = format(new Date(), 'HHmmss');
+      const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${currentDate}_${timestamp}.pdf`;
 
       // Create file metadata
       const metadata = {
