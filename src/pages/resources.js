@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AcademicCapIcon, BookOpenIcon, DocumentTextIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { coursesData, assignmentsData } from '../data/courses';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
 import Navigation from '../components/Navigation';
@@ -12,86 +13,6 @@ export default function Resources() {
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [contentType, setContentType] = useState(null);
-  const [coursesData, setCoursesData] = useState({});
-  const [assignmentsData, setAssignmentsData] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch data when component mounts
-    fetchResources();
-  }, []);
-
-  const fetchResources = async () => {
-    try {
-      setLoading(true);
-      // Fetch units data
-      const unitsRes = await fetch('/api/resources?type=units');
-      if (!unitsRes.ok) {
-        throw new Error(`Failed to fetch units: ${unitsRes.status} ${unitsRes.statusText}`);
-      }
-      const unitsData = await unitsRes.json();
-      
-      // Fetch assignments data
-      const assignmentsRes = await fetch('/api/resources?type=assignments');
-      if (!assignmentsRes.ok) {
-        throw new Error(`Failed to fetch assignments: ${assignmentsRes.status} ${assignmentsRes.statusText}`);
-      }
-      const assignmentsData = await assignmentsRes.json();
-      
-      // Process units data into the format needed
-      const processedUnits = processUnitsData(unitsData);
-      setCoursesData(processedUnits);
-      
-      // Process assignments data
-      const processedAssignments = processAssignmentsData(assignmentsData);
-      setAssignmentsData(processedAssignments);
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching resources:', error);
-      toast.error(`Failed to load resources: ${error.message}`);
-      setLoading(false);
-    }
-  };
-
-  // Process units data from MongoDB into the format needed by the UI
-  const processUnitsData = (units) => {
-    const processed = {};
-    
-    units.forEach(unit => {
-      const courseType = unit.courseType.toUpperCase();
-      const semester = `Semester ${unit.semester}`;
-      const unitName = unit.unit;
-      
-      if (!processed[courseType]) {
-        processed[courseType] = {};
-      }
-      
-      if (!processed[courseType][semester]) {
-        processed[courseType][semester] = {};
-      }
-      
-      processed[courseType][semester][unitName] = unit.pdfLink;
-    });
-    
-    return processed;
-  };
-  
-  // Process assignments data from MongoDB into the format needed by the UI
-  const processAssignmentsData = (assignments) => {
-    const processed = {};
-    
-    assignments.forEach((assignment, index) => {
-      processed[`assignment-${index}`] = {
-        title: assignment.assignmentTitle,
-        description: `${assignment.courseType.toUpperCase()} - Semester ${assignment.semester} - ${assignment.unit}`,
-        url: assignment.pdfLink,
-        dueDate: assignment.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default due date 1 week from now
-      };
-    });
-    
-    return processed;
-  };
 
   const handleReset = () => {
     setSelectedCourse(null);
@@ -113,13 +34,8 @@ export default function Resources() {
   };
 
   const getEmbedUrl = (url) => {
-    try {
-      const fileId = url.match(/\/d\/([^/]+)\/view/)[1];
-      return `https://drive.google.com/file/d/${fileId}/preview`;
-    } catch (error) {
-      // If the URL doesn't match the pattern, return the original URL
-      return url;
-    }
+    const fileId = url.match(/\/d\/([^/]+)\/view/)[1];
+    return `https://drive.google.com/file/d/${fileId}/preview`;
   };
 
   const getCurrentData = () => {
@@ -129,14 +45,6 @@ export default function Resources() {
   const [selectedAssignment, setSelectedAssignment] = useState(null);
 
   const renderAssignments = () => {
-    if (loading) {
-      return <div className="text-center py-10">Loading assignments...</div>;
-    }
-    
-    if (Object.keys(assignmentsData).length === 0) {
-      return <div className="text-center py-10">No assignments available</div>;
-    }
-    
     if (selectedAssignment) {
       return (
         <div className="space-y-6">
@@ -190,10 +98,6 @@ export default function Resources() {
   };
 
   const renderContent = () => {
-    if (loading) {
-      return <div className="text-center py-10">Loading resources...</div>;
-    }
-    
     if (!contentType) {
       return (
         <div className="space-y-6">
@@ -211,10 +115,6 @@ export default function Resources() {
 
     if (contentType === 'assignments') {
       return renderAssignments();
-    }
-    
-    if (Object.keys(coursesData).length === 0) {
-      return <div className="text-center py-10">No course materials available</div>;
     }
 
     if (!selectedCourse) {
