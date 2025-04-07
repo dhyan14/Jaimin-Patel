@@ -14,6 +14,14 @@ export default async function handler(req, res) {
     // Determine which collection to query
     const collection = type === 'assignments' ? 'assignments' : 'units';
     
+    // Create the collection if it doesn't exist
+    const collections = await db.listCollections({ name: collection }).toArray();
+    if (collections.length === 0) {
+      await db.createCollection(collection);
+      // Return empty array if collection was just created
+      return res.status(200).json([]);
+    }
+    
     // Get the data
     const data = await db.collection(collection)
       .find(query)

@@ -1,16 +1,22 @@
 import clientPromise from '../../../lib/mongodb';
 import { verifyToken } from '../../../middleware/auth';
+import cookie from 'cookie';
 
 export default async function handler(req, res) {
   // Check authentication first
-  const token = req.cookies.auth_token;
-  if (!token) {
-    return res.status(401).json({ message: 'Authentication required' });
-  }
+  try {
+    const token = req.cookies?.auth_token;
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
 
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ message: 'Invalid token' });
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+  } catch (error) {
+    console.error('Auth Error:', error);
+    return res.status(401).json({ message: 'Authentication failed' });
   }
 
   try {
@@ -26,6 +32,13 @@ export default async function handler(req, res) {
       if (semester) query.semester = parseInt(semester);
 
       const collection = type === 'assignments' ? 'assignments' : 'units';
+      
+      // Create the collection if it doesn't exist
+      const collections = await db.listCollections({ name: collection }).toArray();
+      if (collections.length === 0) {
+        await db.createCollection(collection);
+      }
+      
       const content = await db.collection(collection).find(query).sort({ createdAt: -1 }).toArray();
       
       return res.status(200).json(content);
@@ -50,12 +63,17 @@ export default async function handler(req, res) {
         updatedAt: new Date()
       };
 
-      // Insert into appropriate collection
-      if (assignmentTitle && assignmentDescription) {
-        await db.collection('assignments').insertOne(content);
-      } else {
-        await db.collection('units').insertOne(content);
+      // Determine which collection to use
+      const collection = assignmentTitle && assignmentDescription ? 'assignments' : 'units';
+      
+      // Create the collection if it doesn't exist
+      const collections = await db.listCollections({ name: collection }).toArray();
+      if (collections.length === 0) {
+        await db.createCollection(collection);
       }
+      
+      // Insert the document
+      await db.collection(collection).insertOne(content);
 
       return res.status(200).json({ message: 'Content added successfully' });
     }

@@ -26,10 +26,16 @@ export default function Resources() {
       setLoading(true);
       // Fetch units data
       const unitsRes = await fetch('/api/resources?type=units');
+      if (!unitsRes.ok) {
+        throw new Error(`Failed to fetch units: ${unitsRes.status} ${unitsRes.statusText}`);
+      }
       const unitsData = await unitsRes.json();
       
       // Fetch assignments data
       const assignmentsRes = await fetch('/api/resources?type=assignments');
+      if (!assignmentsRes.ok) {
+        throw new Error(`Failed to fetch assignments: ${assignmentsRes.status} ${assignmentsRes.statusText}`);
+      }
       const assignmentsData = await assignmentsRes.json();
       
       // Process units data into the format needed
@@ -43,7 +49,7 @@ export default function Resources() {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching resources:', error);
-      toast.error('Failed to load resources');
+      toast.error(`Failed to load resources: ${error.message}`);
       setLoading(false);
     }
   };
