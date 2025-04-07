@@ -2,7 +2,7 @@ export const assignmentsData = {
   "assignment3.3": {
     title: "Assignment 3.3",
     description: "Due Date: April 15, 2025",
-    url: "https://drive.google.com/file/d/1byxUjqQ-5kOX1RZYjGG9LAKF29KdzzPo/view",
+    url: "https://drive.google.com/uc?export=view&id=1Kgjy9L_NHEjLHI4B4AsMcA0SbCzpC2JK",
     dueDate: "2025-04-15T23:59:59+05:30"
   }
 };
