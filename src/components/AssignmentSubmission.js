@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 // Hardcode the client ID temporarily for testing
 const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const FOLDER_ID = '1byxUjqQ-5kOX1RZYjGG9LAKF29KdzzPo';
+const FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Updated folder ID for assignment storage
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -325,7 +325,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           </div>
         </div>
       )}
-      <div className="mb-8 flex space-x-4">
+      <div className="mb-8 flex flex-col space-y-4">
         <a
           href={assignmentUrl}
           target="_blank"
@@ -334,6 +334,16 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         >
           Download Assignment
         </a>
+        {assignmentId === "3.3" && (
+          <a
+            href="https://drive.google.com/uc?export=view&id=1Kgjy9L_NHEjLHI4B4AsMcA0SbCzpC2JK"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg text-center hover:bg-blue-700 transition-colors"
+          >
+            Download Assignment 3.3 PDF
+          </a>
+        )}
       </div>
 
       {isOverdue ? (
