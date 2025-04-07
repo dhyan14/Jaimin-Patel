@@ -22,6 +22,7 @@ console.log('Environment Variables:', {
 });
 
 export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
+  console.log('AssignmentSubmission props:', { assignmentUrl, dueDate, assignmentId });
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [gapiInited, setGapiInited] = useState(false);
   const [gisInited, setGisInited] = useState(false);

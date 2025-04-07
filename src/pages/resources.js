@@ -67,7 +67,7 @@ export default function Resources() {
           <AssignmentSubmission 
             assignmentUrl={selectedAssignment.url}
             dueDate={selectedAssignment.dueDate}
-            assignmentId={selectedAssignment.title.split(' ')[1]} 
+            assignmentId={selectedAssignment.id} 
           />
         </div>
       );
@@ -88,7 +88,7 @@ export default function Resources() {
               key={key}
               title={assignment.title}
               subtitle={assignment.description}
-              onClick={() => setSelectedAssignment(assignment)}
+              onClick={() => setSelectedAssignment({ ...assignment, id: key })}
               icon={DocumentTextIcon}
             />
           ))}
