@@ -1,9 +1,9 @@
-import { verify } from 'jsonwebtoken';
+import { verify, sign } from 'jsonwebtoken';
 
 const SECRET_KEY = 'your-secret-key-here'; // In production, use environment variable
 
 export function generateToken(username) {
-  return jwt.sign({ username }, SECRET_KEY, { expiresIn: '1h' });
+  return sign({ username }, SECRET_KEY, { expiresIn: '1h' });
 }
 
 export function verifyToken(token) {
