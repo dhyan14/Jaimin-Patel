@@ -334,6 +334,16 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         >
           Download Assignment
         </a>
+        {assignmentId === "3.3" && (
+          <a
+            href="https://drive.google.com/uc?export=view&id=1Kgjy9L_NHEjLHI4B4AsMcA0SbCzpC2JK"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg text-center hover:bg-blue-700 transition-colors"
+          >
+            Assignment 3.3 Download PDF
+          </a>
+        )}
       </div>
 
       {isOverdue ? (
