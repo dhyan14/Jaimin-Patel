@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AcademicCapIcon, BookOpenIcon, DocumentTextIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
-import { coursesData, assignmentsData } from '../data/courses';
+import { coursesData, assignmentsData, olympiadData } from '../data/courses';
 import Layout from '../components/Layout';
 import Card from '../components/Card';
 import Navigation from '../components/Navigation';
@@ -13,15 +13,22 @@ export default function Resources() {
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [contentType, setContentType] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState(null);
 
   const handleReset = () => {
     setSelectedCourse(null);
     setSelectedSemester(null);
     setSelectedUnit(null);
     setContentType(null);
+    setSelectedTopic(null);
   };
 
   const handleBack = () => {
+    if (contentType === 'olympiad' && selectedTopic) {
+      setSelectedTopic(null);
+      return;
+    }
+    
     if (selectedUnit) {
       setSelectedUnit(null);
     } else if (selectedSemester) {
@@ -39,7 +46,9 @@ export default function Resources() {
   };
 
   const getCurrentData = () => {
-    return contentType === 'assignments' ? assignmentsData : coursesData;
+    if (contentType === 'assignments') return assignmentsData;
+    if (contentType === 'olympiad') return olympiadData;
+    return coursesData;
   };
 
   const [selectedAssignment, setSelectedAssignment] = useState(null);
@@ -97,6 +106,58 @@ export default function Resources() {
     );
   };
 
+  const renderOlympiad = () => {
+    if (selectedTopic) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-md overflow-hidden"
+        >
+          <div className="p-6 bg-primary-50">
+            <h2 className="text-xl font-display font-semibold text-primary-900">
+              {selectedTopic}
+            </h2>
+          </div>
+          <div className="aspect-[16/9] w-full bg-gray-100">
+            <iframe
+              src={getEmbedUrl(olympiadData[selectedTopic])}
+              className="w-full h-full"
+              allow="autoplay"
+              frameBorder="0"
+            ></iframe>
+          </div>
+        </motion.div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <motion.h2
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-2xl font-display font-bold text-gray-900"
+        >
+          Select Your Topic
+        </motion.h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.keys(olympiadData).map((topic) => (
+            <Card
+              key={topic}
+              title={topic}
+              subtitle="Click to view PDF"
+              onClick={() => {
+                setSelectedTopic(topic);
+                toast.success(`Opening ${topic}`);
+              }}
+              icon={DocumentTextIcon}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (!contentType) {
       return (
@@ -115,6 +176,10 @@ export default function Resources() {
 
     if (contentType === 'assignments') {
       return renderAssignments();
+    }
+
+    if (contentType === 'olympiad') {
+      return renderOlympiad();
     }
 
     if (!selectedCourse) {
@@ -227,7 +292,7 @@ export default function Resources() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        {(contentType || selectedCourse || selectedSemester || selectedUnit) && (
+        {(contentType || selectedCourse || selectedSemester || selectedUnit || selectedTopic) && (
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -240,7 +305,7 @@ export default function Resources() {
         )}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${selectedCourse}-${selectedSemester}-${selectedUnit}`}
+            key={`${contentType}-${selectedCourse}-${selectedSemester}-${selectedUnit}-${selectedTopic}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}

@@ -4,19 +4,13 @@ import toast from 'react-hot-toast';
 import Script from 'next/script';
 import { format } from 'date-fns';
 
-// Hardcode the client ID temporarily for testing
-const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
+// Google Drive API configuration
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Updated folder ID for assignment storage
+const FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Folder ID for assignment storage
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-
-console.log('Using Client ID:', CLIENT_ID);
 
 // Log environment variables
 console.log('Environment Variables:', {
-  NEXT_PUBLIC_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-  CLIENT_ID,
   API_KEY,
   FOLDER_ID,
 });
@@ -25,19 +19,17 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
   console.log('AssignmentSubmission props:', { assignmentUrl, dueDate, assignmentId });
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [gapiInited, setGapiInited] = useState(false);
-  const [gisInited, setGisInited] = useState(false);
-  const [tokenClient, setTokenClient] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
     console.log('Environment variables:', {
-      CLIENT_ID,
       API_KEY,
       FOLDER_ID
     });
 
     const initializeGoogleAPIs = async () => {
-      if (!window.gapi || !window.google) {
+      if (!window.gapi) {
         console.log('Google APIs not yet available');
         return;
       }
@@ -57,35 +49,9 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         });
         console.log('GAPI client initialized');
         setGapiInited(true);
-
-        // Get the current origin
-        const origin = window.location.origin;
-        console.log('Current origin:', origin);
-
-        // Initialize token client with minimal configuration
-        const tokenClientConfig = {
-          client_id: CLIENT_ID,
-          scope: SCOPES,
-          callback: '', // Will be set later
-          error_callback: (error) => {
-            console.error('OAuth error:', error);
-            console.log('Error details:', JSON.stringify(error, null, 2));
-            toast.error(`Authentication error: ${error.error || 'Unknown error'}`);
-          }
-        };
-
-        console.log('Initializing token client with config:', tokenClientConfig);
-        const client = window.google.accounts.oauth2.initTokenClient(tokenClientConfig);
-        console.log('Token client initialized');
-        setTokenClient(client);
-        setGisInited(true);
       } catch (error) {
         console.error('Error in GAPI initialization:', error);
-        if (error.details?.includes('oauth2')) {
-          toast.error('OAuth configuration error. Please check your Google Cloud Console settings.');
-        } else {
-          toast.error('Failed to initialize Google Drive integration');
-        }
+        toast.error('Failed to initialize Google Drive integration');
       }
     };
 
@@ -93,6 +59,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       initializeGoogleAPIs();
     }
   }, [scriptsLoaded]);
+
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
   const [file, setFile] = useState(null);
@@ -131,119 +98,79 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
     setIsOverdue(now > dueDateObj);
   }, [dueDate]);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadProgress(0);
+    setIsLoading(true);
 
     if (!enrollmentNo || !studentName || !file) {
       toast.error('Please fill all the required fields');
+      setIsLoading(false);
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB
       toast.error('File size must be less than 10MB');
+      setIsLoading(false);
       return;
     }
 
     if (isOverdue) {
       toast.error('Assignment submission is closed as the due date has passed.');
+      setIsLoading(false);
       return;
     }
 
     try {
       setUploadProgress(10);
 
-      // Check if we need to get access token
-      if (!window.gapi.client.getToken()) {
-        await new Promise((resolve, reject) => {
-          tokenClient.callback = (resp) => {
-            if (resp.error) {
-              reject(resp);
-            } else {
-              resolve(resp);
-            }
-          };
-          tokenClient.requestAccessToken({ prompt: 'consent' });
-        });
-      }
-
       // Generate a unique filename
       const currentDate = format(new Date(), 'yyyyMMdd');
       const timestamp = format(new Date(), 'HHmmss');
       const filename = `Assignment_${assignmentId}_${enrollmentNo}_${studentName.replace(/\s+/g, '_')}_${currentDate}_${timestamp}.pdf`;
 
-      // Create file metadata
-      const metadata = {
-        name: filename,
-        mimeType: 'application/pdf',
-        parents: [FOLDER_ID]
-      };
-
-      // Read file as ArrayBuffer
+      // Read file as base64
       const content = await new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
+        reader.onload = (e) => resolve(e.target.result.split(',')[1]); // Get base64 content without MIME prefix
         reader.onerror = (e) => reject(e);
-        reader.readAsArrayBuffer(file);
+        reader.readAsDataURL(file);
       });
 
       setUploadProgress(30);
 
-      console.log('Starting Google Drive upload...');
+      console.log('Preparing to upload file to Google Drive...');
       console.log('Folder ID:', FOLDER_ID);
-      console.log('Metadata:', metadata);
       
       if (!FOLDER_ID) {
         throw new Error('Google Drive folder ID is not configured');
       }
 
-      const accessToken = window.gapi.client.getToken()?.access_token;
-      if (!accessToken) {
-        throw new Error('No access token available. Please sign in again.');
-      }
-      console.log('Access token available:', !!accessToken);
-
-      console.log('Step 1: Creating file...');
-      const createResponse = await window.gapi.client.drive.files.create({
-        resource: {
-          name: filename,
-          mimeType: 'application/pdf'
+      // Call the server-side API endpoint to upload the file using service account
+      const response = await fetch('/api/upload-assignment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        fields: 'id, name, webViewLink'
-      });
-      
-      console.log('File created:', createResponse.result);
-      const fileData = createResponse.result;
-      setUploadProgress(50);
-
-      // Upload content
-      console.log('Step 2: Uploading content...');
-      const media = new Blob([content], { type: 'application/pdf' });
-      const response = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${fileData.id}?uploadType=media`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/pdf'
-          },
-          body: media
+        body: JSON.stringify({
+          filename,
+          mimeType: 'application/pdf',
+          folderId: FOLDER_ID,
+          content, // base64 encoded file content
+          metadata: {
+            assignmentId,
+            enrollmentNo,
+            studentName
+          }
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Content upload failed: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload file');
       }
-      setUploadProgress(75);
 
-      // Move to folder
-      console.log('Step 3: Moving to target folder...');
-      await window.gapi.client.drive.files.update({
-        fileId: fileData.id,
-        addParents: FOLDER_ID,
-        fields: 'id, parents, webViewLink'
-      });
-      
-      console.log('File moved to folder successfully');
+      const fileData = await response.json();
       setUploadProgress(90);
 
       // Store submission details
@@ -279,24 +206,23 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       setUploadProgress(0);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload assignment. Please try again.');
+      toast.error(`Failed to upload assignment: ${error.message}`);
       setUploadProgress(0);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isReady = gapiInited && gisInited && tokenClient;
-
   // Track script loading state
   const [gapiLoaded, setGapiLoaded] = useState(false);
-  const [gisLoaded, setGisLoaded] = useState(false);
 
-  // Update scriptsLoaded when both scripts are ready
+  // Update scriptsLoaded when script is ready
   useEffect(() => {
-    if (gapiLoaded && gisLoaded) {
-      console.log('Both scripts are loaded');
+    if (gapiLoaded) {
+      console.log('Google API script is loaded');
       setScriptsLoaded(true);
     }
-  }, [gapiLoaded, gisLoaded]);
+  }, [gapiLoaded]);
 
   return (
     <>
@@ -308,20 +234,12 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
           if (window.gapi) setGapiLoaded(true);
         }}
       />
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-        onReady={() => {
-          console.log('Google Identity Services script loaded');
-          if (window.google) setGisLoaded(true);
-        }}
-      />
       <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md relative">
-      {!isReady && (
+      {(!gapiInited || isLoading) && (
         <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
-            <p>Loading Google Drive integration...</p>
+            <p>{isLoading ? 'Uploading your assignment...' : 'Loading Google Drive integration...'}</p>
           </div>
         </div>
       )}
@@ -408,6 +326,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
         <button
           type="submit"
           className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+          disabled={!gapiInited || isLoading}
         >
           Submit Assignment
         </button>

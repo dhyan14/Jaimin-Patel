@@ -33,3 +33,10 @@ export const coursesData = {
     }
   }
 };
+
+export const olympiadData = {
+  "Algebra": "https://drive.google.com/file/d/11iSgkma5b018OCZbPDuHO3k9DvwDAzb-/view?usp=sharing",
+  "Combinatorics": "https://drive.google.com/file/d/126B6oKXRK0srsK0Qdk6dqOdX39S82WIL/view?usp=sharing",
+  "Geometry": "https://drive.google.com/file/d/10-0644Wju4tSzKAvK7l_pZtgmmnlux0q/view?usp=sharing",
+  "Number Theory": "https://drive.google.com/file/d/11lMrU26YRm-Zq3NJbFLZ2xIBHP3C9trS/view?usp=sharing"
+};

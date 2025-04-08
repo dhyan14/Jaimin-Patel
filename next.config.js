@@ -8,6 +8,13 @@ const nextConfig = {
   images: {
     domains: ['drive.google.com'],
   },
+  // Environment variables that will be available at build time
+  env: {
+    NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    GOOGLE_SERVICE_ACCOUNT_PROJECT_ID: process.env.GOOGLE_SERVICE_ACCOUNT_PROJECT_ID,
+  },
   async headers() {
     return [
       {
