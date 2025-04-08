@@ -6,7 +6,8 @@ import { format } from 'date-fns';
 
 // Google Drive API configuration
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Folder ID for assignment storage
+// Update with your folder ID that has been shared with assignments@assignments-454413.iam.gserviceaccount.com
+const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID || '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 
 // Log environment variables

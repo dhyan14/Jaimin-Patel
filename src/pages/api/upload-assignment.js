@@ -15,13 +15,14 @@ export default async function handler(req, res) {
 
     // Get service account credentials from environment variables
     const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
     const projectId = process.env.GOOGLE_SERVICE_ACCOUNT_PROJECT_ID;
 
     // Log environment variables (without exposing full private key)
     console.log('Service Account Email:', serviceAccountEmail);
     console.log('Project ID:', projectId);
     console.log('Private Key available:', !!privateKey);
+    console.log('Private Key length:', privateKey?.length);
     console.log('Folder ID:', folderId);
 
     if (!serviceAccountEmail || !privateKey) {
@@ -36,43 +37,45 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create a JWT client using the service account credentials
-    const jwtClient = new google.auth.JWT(
-      serviceAccountEmail,
-      null,
-      privateKey,
-      ['https://www.googleapis.com/auth/drive']
-    );
-
-    console.log('JWT client created, attempting to authorize...');
-
-    try {
-      // Authorize the client
-      await jwtClient.authorize();
-      console.log('JWT client authorized successfully');
-    } catch (authError) {
-      console.error('JWT authorization error:', authError);
-      return res.status(500).json({ 
-        message: 'Failed to authorize with Google Drive',
-        error: authError.message
-      });
+    // Process the private key - try different formats to handle Vercel environment variable issues
+    let processedPrivateKey = privateKey;
+    
+    // If the key doesn't contain newlines, try to replace escaped newlines
+    if (!privateKey.includes('\n')) {
+      processedPrivateKey = privateKey
+        .replace(/\\n/g, '\n')  // Replace \n with actual newlines
+        .replace(/["']/g, '');  // Remove any quotes that might be part of the environment variable
     }
 
-    // Create Drive client
-    const drive = google.drive({ version: 'v3', auth: jwtClient });
-    console.log('Drive client created');
+    console.log('Private key processed, contains newlines:', processedPrivateKey.includes('\n'));
 
-    // Create file metadata
-    const fileMetadata = {
-      name: filename,
-      mimeType: mimeType,
-      parents: [folderId],
-      properties: metadata // Store additional metadata as custom properties
-    };
+    // Create auth client
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: serviceAccountEmail,
+        private_key: processedPrivateKey,
+        project_id: projectId
+      },
+      scopes: ['https://www.googleapis.com/auth/drive']
+    });
+
+    console.log('Auth client created, creating drive client...');
+
+    // Create Drive client
+    const drive = google.drive({ version: 'v3', auth });
+    console.log('Drive client created');
 
     console.log('Attempting to create file in Google Drive...');
 
     try {
+      // Create file metadata
+      const fileMetadata = {
+        name: filename,
+        mimeType: mimeType,
+        parents: [folderId],
+        properties: metadata // Store additional metadata as custom properties
+      };
+
       // Create the file
       const file = await drive.files.create({
         requestBody: fileMetadata,
@@ -109,10 +112,16 @@ export default async function handler(req, res) {
       });
     } catch (fileError) {
       console.error('File creation error:', fileError);
+      
+      // Log detailed error information
+      if (fileError.response) {
+        console.error('Error response:', fileError.response.data);
+      }
+      
       return res.status(500).json({ 
         message: 'Failed to create file in Google Drive',
         error: fileError.message,
-        details: fileError.errors || 'No detailed error information available'
+        details: fileError.response?.data || 'No detailed error information available'
       });
     }
   } catch (error) {
