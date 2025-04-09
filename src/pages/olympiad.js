@@ -22,10 +22,11 @@ export default function Olympiad() {
             className="max-w-xs mx-auto mb-6"
           >
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/IMO_logo.svg/1280px-IMO_logo.svg.png" 
-              alt="IMO Logo" 
+              src="/output-onlinegiftools.gif" 
+              alt="Olympiad Logo" 
               className="w-full h-auto"
-            />          </motion.div>
+            />
+          </motion.div>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
