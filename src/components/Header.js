@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MyGreen } from '../utils/constants';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -11,13 +12,14 @@ export default function Header() {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Resources', href: '/resources' },
+    { name: 'Olympiad', href: '/olympiad' },
     { name: 'About', href: '/about' },
   ];
 
   const isActive = (path) => router.pathname === path;
 
   return (
-    <header className="bg-green-600 shadow-md text-white">
+    <header style={{ backgroundColor: MyGreen }} className="shadow-md text-white">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-6">
           <motion.h1
@@ -40,7 +42,7 @@ export default function Header() {
                 className={`text-lg font-medium transition-colors ${
                   isActive(item.href)
                     ? 'text-white border-b-2 border-white'
-                    : 'text-green-100 hover:text-white'
+                    : 'text-green-50 hover:text-white'
                 }`}
               >
                 {item.name}
@@ -76,7 +78,7 @@ export default function Header() {
                   className={`text-lg font-medium transition-colors ${
                     isActive(item.href)
                       ? 'text-white'
-                      : 'text-green-100 hover:text-white'
+                      : 'text-green-50 hover:text-white'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
