@@ -26,7 +26,7 @@ export default function Home() {
           >
             <div className="min-w-[250px] sm:min-w-[300px] inline-block">
               <MathEquation>
-                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, dx'}
+                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, \\mathrm{d}x'}
               </MathEquation>
             </div>
           </motion.div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Bars3Icon, XMarkIcon, AcademicCapIcon, BookOpenIcon, BeakerIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 import { MyGreen } from '../utils/constants';
+import MathEquation from './MathEquation';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -68,7 +69,7 @@ export default function Header() {
 
   // Background animation elements
   const bgElements = [
-    { id: 1, icon: "∫", x: "10%", y: "20%", size: "text-lg", delay: 0 },
+    { id: 1, icon: "\\int", x: "10%", y: "20%", size: "text-lg", delay: 0 },
     { id: 2, icon: "∑", x: "25%", y: "70%", size: "text-xl", delay: 0.5 },
     { id: 3, icon: "π", x: "75%", y: "30%", size: "text-lg", delay: 1 },
     { id: 4, icon: "√", x: "85%", y: "60%", size: "text-xl", delay: 1.5 },
@@ -80,39 +81,33 @@ export default function Header() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`fixed w-full z-50 transition-all duration-300 overflow-hidden ${
-        scrolled 
-          ? 'bg-white/90 backdrop-blur-md text-gray-800 shadow-lg' 
-          : 'bg-[#208040]/95 backdrop-blur-md text-white shadow-md'
-      }`}
+      className="fixed w-full z-50 transition-all duration-300 overflow-hidden bg-[#208040] backdrop-blur-md text-white shadow-md"
     >
-      {/* Animated background elements - only visible when not scrolled */}
-      {!scrolled && (
-        <div className="absolute inset-0 overflow-hidden">
-          {bgElements.map((el) => (
-            <motion.div
-              key={el.id}
-              className={`absolute ${el.size} opacity-20 font-bold`}
-              style={{ left: el.x, top: el.y }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ 
-                opacity: 0.2, 
-                scale: 1,
-                y: [0, -10, 0],
-                rotate: [0, 5, 0, -5, 0]
-              }}
-              transition={{ 
-                delay: el.delay,
-                duration: 3,
-                repeat: Infinity,
-                repeatType: "reverse"
-              }}
-            >
-              {el.icon}
-            </motion.div>
-          ))}
-        </div>
-      )}
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {bgElements.map((el) => (
+          <motion.div
+            key={el.id}
+            className={`absolute ${el.size} opacity-20 font-bold`}
+            style={{ left: el.x, top: el.y }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ 
+              opacity: 0.2, 
+              scale: 1,
+              y: [0, -10, 0],
+              rotate: [0, 5, 0, -5, 0]
+            }}
+            transition={{ 
+              delay: el.delay,
+              duration: 3,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          >
+            {el.icon}
+          </motion.div>
+        ))}
+      </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex justify-between items-center py-4">
@@ -130,25 +125,17 @@ export default function Header() {
                   boxShadow: "0 0 12px rgba(255,255,255,0.6)"
                 }}
                 transition={{ duration: 0.6 }}
-                className={`p-2 rounded-full ${
-                  scrolled 
-                    ? 'bg-green-100 border border-green-300' 
-                    : 'bg-[#176830] border border-[#1a7035]/50'
-                }`}
+                className="p-2 rounded-full bg-[#208040]"
               >
-                <span className={`text-3xl font-bold ${
-                  scrolled ? 'text-green-600' : 'text-white'
-                }`}>∫</span>
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <MathEquation>{'\\int'}</MathEquation>
+                </div>
               </motion.div>
               <motion.span 
-                className={`text-2xl font-display font-bold transition-colors ${
-                  scrolled ? 'text-gray-800' : 'text-white'
-                }`}
+                className="text-2xl font-display font-bold text-white"
                 whileHover={{ 
                   scale: 1.05,
-                  textShadow: scrolled 
-                    ? "0 0 2px rgba(0,0,0,0.2)" 
-                    : "0 0 8px rgba(255,255,255,0.8)"
+                  textShadow: "0 0 8px rgba(255,255,255,0.8)"
                 }}
               >
                 Jaimin Patel
@@ -171,23 +158,15 @@ export default function Header() {
                   href={item.href}
                   className={`text-lg font-medium transition-all relative px-2 py-1 flex items-center space-x-1 ${
                     isActive(item.href)
-                      ? scrolled 
-                          ? 'text-green-600 font-semibold' 
-                          : 'text-white font-semibold'
-                      : scrolled 
-                          ? 'text-gray-600 hover:text-green-600' 
-                          : 'text-green-50 hover:text-white'
+                      ? 'text-white font-semibold'
+                      : 'text-green-50 hover:text-white'
                   }`}
                 >
                   <motion.span 
                     className={`inline-block ${
                       isActive(item.href)
-                        ? scrolled 
-                            ? 'text-green-500' 
-                            : 'text-green-200'
-                        : scrolled 
-                            ? 'text-green-600/70' 
-                            : 'text-green-200/70'
+                        ? 'text-green-200'
+                        : 'text-green-200/70'
                     }`}
                     whileHover={{ rotate: [0, -10, 10, -10, 0] }}
                     transition={{ duration: 0.5 }}
@@ -198,11 +177,7 @@ export default function Header() {
                   {isActive(item.href) && (
                     <motion.div
                       layoutId="underline"
-                      className={`absolute bottom-0 left-0 w-full h-0.5 ${
-                        scrolled 
-                          ? 'bg-green-600' 
-                          : 'bg-white'
-                      }`}
+                      className="absolute bottom-0 left-0 w-full h-0.5 bg-white"
                       initial={{ width: "0%" }}
                       animate={{ width: "100%" }}
                       transition={{ duration: 0.3 }}
@@ -228,7 +203,7 @@ export default function Header() {
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <XMarkIcon className={`h-6 w-6 ${scrolled ? 'text-gray-800' : 'text-white'}`} />
+                  <XMarkIcon className="h-6 w-6 text-white" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -238,7 +213,7 @@ export default function Header() {
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Bars3Icon className={`h-6 w-6 ${scrolled ? 'text-gray-800' : 'text-white'}`} />
+                  <Bars3Icon className="h-6 w-6 text-white" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -267,16 +242,12 @@ export default function Header() {
                       href={item.href}
                       className={`text-lg font-medium transition-colors flex items-center space-x-2 py-2 px-4 rounded-lg ${
                         isActive(item.href)
-                          ? scrolled 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-[#176830] text-white'
-                          : scrolled 
-                            ? 'text-gray-600 hover:bg-gray-100/70' 
-                            : 'text-green-50 hover:bg-[#176830] hover:text-white'
+                          ? 'bg-[#176830] text-white'
+                          : 'text-green-50 hover:bg-[#176830] hover:text-white'
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <span className={isActive(item.href) ? 'text-green-500' : ''}>{item.icon}</span>
+                      <span className={isActive(item.href) ? 'text-green-200' : ''}>{item.icon}</span>
                       <span>{item.name}</span>
                     </Link>
                   </motion.div>
