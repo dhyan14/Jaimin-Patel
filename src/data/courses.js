@@ -4,6 +4,13 @@ export const assignmentsData = {
     description: "Due Date: April 11, 2025",
     url: "https://drive.google.com/uc?export=view&id=1Kgjy9L_NHEjLHI4B4AsMcA0SbCzpC2JK",
     dueDate: "2025-04-11T23:59:59+05:30"
+  },
+  "assignment4.1": {
+    title: "Assignment 4.1",
+    description: "Due Date: April 14, 2025",
+    url: "https://drive.google.com/uc?export=download&id=1AVhz1wtgn9AO5nUlEd48GZQdTihe_EsC",
+    dueDate: "2025-04-14T23:59:59+05:30",
+    folderId: "1AXlHx988LnLfuci0oWmAkZfEsryw5wAj"
   }
 };
 
