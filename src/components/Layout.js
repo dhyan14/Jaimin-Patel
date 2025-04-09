@@ -12,7 +12,7 @@ export default function Layout({ children }) {
 
       <footer className="bg-white border-t mt-auto fixed bottom-0 w-full z-40">
         <div className="container mx-auto px-4 py-4 text-center text-gray-600">
-          {new Date().getFullYear()} Jaimin Patel. All rights reserved.
+          &copy; {new Date().getFullYear()} Jaimin Patel. All rights reserved.
         </div>
       </footer>
 
