@@ -78,6 +78,19 @@ export default function Olympiad() {
                 <div className="mt-4 text-blue-600 text-sm font-medium">Click to view detailed guide →</div>
               </motion.div>
             </Link>
+            <Link href={`/olympiad/question/5`}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+              >
+                <div className="flex justify-between items-start">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Material For Mathematical Olympiad</h3>
+                </div>
+                <p className="text-gray-700 font-bold">{imoQuestions[4].question}</p>
+                <div className="mt-4 text-blue-600 text-sm font-medium">Click to view detailed guide →</div>
+              </motion.div>
+            </Link>
           </div>
         </div>
       </div>
