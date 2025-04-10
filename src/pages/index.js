@@ -109,12 +109,12 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto font-math overflow-x-auto px-4 mb-8"
+            transition={{ delay: 0.2 }}
+            className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto font-math overflow-x-auto px-2"
           >
-            <div className="min-w-[280px] sm:min-w-[500px] mx-auto">
-              <MathEquation animate={true}>
-                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\cdot \\text{mathematics} \\, dx'}
+            <div className="min-w-[250px] sm:min-w-[300px] inline-block">
+              <MathEquation>
+                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, dx'}
               </MathEquation>
             </div>
           </motion.div>
