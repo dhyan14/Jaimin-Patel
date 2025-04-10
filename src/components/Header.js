@@ -92,8 +92,8 @@ export default function Header() {
             style={{ left: el.x, top: el.y }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ 
-              opacity: 0.2, 
-              scale: 1,
+              opacity: [0.1, 0.3, 0.1],
+              scale: [0.8, 1.2, 0.8],
               y: [0, -10, 0],
               rotate: [0, 5, 0, -5, 0]
             }}
@@ -125,14 +125,14 @@ export default function Header() {
                   boxShadow: "0 0 12px rgba(255,255,255,0.6)"
                 }}
                 transition={{ duration: 0.6 }}
-                className="p-2 rounded-full bg-[#208040]"
+                className="p-1 sm:p-2 rounded-full bg-[#208040]"
               >
-                <div className="w-8 h-8 flex items-center justify-center">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
                   <MathEquation>{'\\int'}</MathEquation>
                 </div>
               </motion.div>
               <motion.span 
-                className="text-2xl font-display font-bold text-white"
+                className="text-xl sm:text-2xl font-display font-bold text-white"
                 whileHover={{ 
                   scale: 1.05,
                   textShadow: "0 0 8px rgba(255,255,255,0.8)"
@@ -236,7 +236,12 @@ export default function Header() {
                     key={item.name}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
+                    transition={{ delay: i * 0.1, duration: 0.3 }}
+                    whileHover={{ 
+                      scale: 1.03,
+                      x: 5,
+                      transition: { duration: 0.2 }
+                    }}
                   >
                     <Link
                       href={item.href}
@@ -247,7 +252,13 @@ export default function Header() {
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <span className={isActive(item.href) ? 'text-green-200' : ''}>{item.icon}</span>
+                      <motion.span 
+                        className={isActive(item.href) ? 'text-green-200' : ''}
+                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        {item.icon}
+                      </motion.span>
                       <span>{item.name}</span>
                     </Link>
                   </motion.div>
