@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Bars3Icon, XMarkIcon, AcademicCapIcon, BookOpenIcon, BeakerIcon, LightBulbIcon } from '@heroicons/react/24/outline';
-import { MyGreen } from '../utils/constants';
 import MathEquation from './MathEquation';
 
 export default function Header() {
@@ -81,14 +80,16 @@ export default function Header() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
-      className="fixed w-full z-50 transition-all duration-300 overflow-hidden bg-[#208040] backdrop-blur-md text-white shadow-md"
+      className={`fixed w-full z-50 transition-all duration-300 overflow-hidden bg-[#208040] backdrop-blur-md text-white shadow-md ${
+        scrolled ? 'py-2' : 'py-3'
+      }`}
     >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {bgElements.map((el) => (
           <motion.div
             key={el.id}
-            className={`absolute ${el.size} opacity-20 font-bold`}
+            className={`absolute ${el.size} opacity-20 font-math`}
             style={{ left: el.x, top: el.y }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ 
@@ -110,7 +111,7 @@ export default function Header() {
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center py-2">
           <motion.div
             variants={logoVariants}
             initial="hidden"
@@ -118,18 +119,12 @@ export default function Header() {
             className="flex items-center space-x-2"
           >
             <Link href="/" className="flex items-center space-x-2 group">
-              <motion.div
-                whileHover={{ 
-                  rotate: 360,
-                  scale: 1.1,
-                  boxShadow: "0 0 12px rgba(255,255,255,0.6)"
-                }}
+              <motion.div 
+                whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
-                className="p-1 sm:p-2 rounded-full bg-[#208040]"
+                className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center"
               >
-                <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                  <MathEquation>{'\\int'}</MathEquation>
-                </div>
+                <MathEquation>{'\\int'}</MathEquation>
               </motion.div>
               <motion.span 
                 className="text-xl sm:text-2xl font-display font-bold text-white"
@@ -248,17 +243,11 @@ export default function Header() {
                       className={`text-lg font-medium transition-colors flex items-center space-x-2 py-2 px-4 rounded-lg ${
                         isActive(item.href)
                           ? 'bg-[#176830] text-white'
-                          : 'text-green-50 hover:bg-[#176830] hover:text-white'
+                          : 'text-green-50 hover:bg-[#176830]/50'
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <motion.span 
-                        className={isActive(item.href) ? 'text-green-200' : ''}
-                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        {item.icon}
-                      </motion.span>
+                      <span className="text-green-200">{item.icon}</span>
                       <span>{item.name}</span>
                     </Link>
                   </motion.div>

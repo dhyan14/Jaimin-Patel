@@ -1,119 +1,255 @@
-import { motion } from 'framer-motion';
-import { ArrowRightIcon, BookOpenIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRightIcon, BookOpenIcon, UserGroupIcon, AcademicCapIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useRef } from 'react';
 import Layout from '../components/Layout';
 import MathEquation from '../components/MathEquation';
 import 'katex/dist/katex.min.css';
 
 export default function Home() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"]
+  });
+  
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.5]);
+
+  // Animation variants for staggered animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut"
+      }
+    }
+  };
+  
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: (i) => ({ 
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: 0.2 * i,
+        duration: 0.7,
+        ease: "easeOut"
+      }
+    }),
+    hover: { 
+      y: -8,
+      boxShadow: "0 15px 30px rgba(9, 94, 161, 0.15)",
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12 sm:mb-16">
+      <div ref={ref} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Hero Section with Parallax Effect */}
+        <motion.div 
+          className="relative text-center mb-16 sm:mb-20"
+          style={{ y, opacity }}
+        >
+          {/* Decorative math symbols */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            {['∫', '∑', 'π', '√', 'Δ', '∞', 'φ', '∂'].map((symbol, i) => (
+              <motion.div
+                key={i}
+                className="absolute text-math-300 opacity-10 font-math"
+                style={{
+                  fontSize: `${Math.random() * 4 + 2}rem`,
+                  left: `${Math.random() * 90 + 5}%`,
+                  top: `${Math.random() * 90}%`,
+                  rotate: `${Math.random() * 30 - 15}deg`
+                }}
+                animate={{
+                  y: [0, -15, 0],
+                  rotate: [`${Math.random() * 10 - 5}deg`, `${Math.random() * 10 - 5}deg`],
+                  opacity: [0.1, 0.2, 0.1]
+                }}
+                transition={{
+                  duration: 5 + Math.random() * 3,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  delay: i * 0.5
+                }}
+              >
+                {symbol}
+              </motion.div>
+            ))}
+          </div>
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-gray-900 mb-4 sm:mb-6"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-slate-900 mb-6 sm:mb-8 tracking-tight"
           >
-            Welcome To My Math World
+            Welcome To My <span className="text-math-700">Math</span> World
           </motion.h1>
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto font-math overflow-x-auto px-2"
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="text-sm sm:text-lg text-slate-600 max-w-3xl mx-auto font-math overflow-x-auto px-4 mb-8"
           >
-            <div className="min-w-[250px] sm:min-w-[300px] inline-block">
-              <MathEquation>
-                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\, \\mathrm{d}x'}
+            <div className="min-w-[280px] sm:min-w-[500px] mx-auto">
+              <MathEquation animate={true}>
+                {'\\text{Where } f(\\text{passion}) = \\int_{\\text{knowledge}}^{\\text{innovation}} \\text{creativity} \\cdot \\text{mathematics} \\, dx'}
               </MathEquation>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 mb-16"
+        >
           {/* Resources Card */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            custom={0}
+            variants={cardVariants}
+            whileHover="hover"
+            className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-100 transition-all"
           >
             <div className="p-6 sm:p-8">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <BookOpenIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+              <motion.div 
+                className="flex items-center mb-6"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="p-3 bg-math-100 rounded-xl">
+                  <BookOpenIcon className="h-8 w-8 sm:h-10 sm:w-10 text-math-600" />
                 </div>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Educational Resources</h3>
-              <p className="text-gray-600 mb-4 sm:mb-6">
-                Access course materials, lecture notes, and study resources for all semesters.
+              </motion.div>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-4">Educational Resources</h3>
+              <p className="text-slate-600 mb-6">
+                Access course materials, lecture notes, problem sets, and comprehensive study resources for mathematics at all levels.
               </p>
               <Link
                 href="/resources"
-                className="inline-flex items-center text-green-600 hover:text-green-700 font-medium"
+                className="inline-flex items-center text-math-600 hover:text-math-700 font-medium group"
               >
-                Browse Resources <ArrowRightIcon className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Browse Resources 
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: 5 }}
+                  className="ml-2"
+                >
+                  <ArrowRightIcon className="h-5 w-5" />
+                </motion.span>
               </Link>
             </div>
           </motion.div>
 
           {/* Olympiad Card */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            custom={1}
+            variants={cardVariants}
+            whileHover="hover"
+            className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-100 transition-all"
           >
             <div className="p-6 sm:p-8">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0" />
-                  </svg>
+              <motion.div 
+                className="flex items-center mb-6"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="p-3 bg-math-100 rounded-xl">
+                  <BeakerIcon className="h-8 w-8 sm:h-10 sm:w-10 text-math-600" />
                 </div>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">Mathematical Olympiad</h3>
-              <p className="text-gray-600 mb-4 sm:mb-6">
-                Explore resources, practice problems, and preparation materials for mathematics competitions.
+              </motion.div>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-4">Mathematical Olympiad</h3>
+              <p className="text-slate-600 mb-6">
+                Explore advanced problem-solving techniques, practice problems, and comprehensive preparation materials for mathematics competitions.
               </p>
               <Link
                 href="/olympiad"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                className="inline-flex items-center text-math-600 hover:text-math-700 font-medium group"
               >
-                Explore Olympiad <ArrowRightIcon className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Explore Olympiad 
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: 5 }}
+                  className="ml-2"
+                >
+                  <ArrowRightIcon className="h-5 w-5" />
+                </motion.span>
               </Link>
             </div>
           </motion.div>
 
           {/* About Card */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            custom={2}
+            variants={cardVariants}
+            whileHover="hover"
+            className="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-100 transition-all"
           >
             <div className="p-6 sm:p-8">
-              <div className="flex items-center mb-4">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <UserGroupIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+              <motion.div 
+                className="flex items-center mb-6"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="p-3 bg-math-100 rounded-xl">
+                  <AcademicCapIcon className="h-8 w-8 sm:h-10 sm:w-10 text-math-600" />
                 </div>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-3 sm:mb-4">About Me</h3>
-              <p className="text-gray-600 mb-4 sm:mb-6">
-                Learn more about my academic background, teaching philosophy, and expertise.
+              </motion.div>
+              <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 mb-4">About Me</h3>
+              <p className="text-slate-600 mb-6">
+                Learn more about my academic background, research interests, teaching philosophy, and professional expertise in mathematics.
               </p>
               <Link
                 href="/about"
-                className="inline-flex items-center text-green-600 hover:text-green-700 font-medium"
+                className="inline-flex items-center text-math-600 hover:text-math-700 font-medium group"
               >
-                Learn More <ArrowRightIcon className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Learn More 
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: 5 }}
+                  className="ml-2"
+                >
+                  <ArrowRightIcon className="h-5 w-5" />
+                </motion.span>
               </Link>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
+        
+        {/* Quote Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="bg-math-50 rounded-2xl p-8 sm:p-10 border border-math-100 shadow-equation"
+        >
+          <blockquote className="text-lg sm:text-xl md:text-2xl font-math text-slate-700 text-center italic">
+            "Mathematics is not about numbers, equations, computations, or algorithms: it is about understanding."
+          </blockquote>
+          <div className="text-right mt-4 text-slate-500">— William Paul Thurston</div>
+        </motion.div>
       </div>
     </Layout>
   );
