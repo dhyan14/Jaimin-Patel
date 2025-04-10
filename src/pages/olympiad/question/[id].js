@@ -173,6 +173,9 @@ export default function QuestionDetail() {
               </div>
             </motion.div>
 
+            {/* Content title first */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Content</h2>
+            
             {/* Problem Solving Card */}
             <div className="flex justify-center mb-8">
               <Link href="/olympiad/content/problem-solving">
@@ -194,8 +197,7 @@ export default function QuestionDetail() {
               </Link>
             </div>
 
-            {/* Additional subject cards */}
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Content</h2>
+            {/* Four subject cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Number Theory Card */}
               <Link href="/olympiad/content/number-theory">
