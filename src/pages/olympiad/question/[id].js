@@ -161,16 +161,90 @@ export default function QuestionDetail() {
         
         {/* Check if it's Material For Mathematical Olympiad */}
         {question.id === 5 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-md p-8"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Reference Materials</h2>
-            <div className="text-gray-700 prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: question.answer }} />
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-md p-8 mb-8"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Reference Materials</h2>
+              <div className="text-gray-700 prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: question.answer }} />
+              </div>
+            </motion.div>
+
+            {/* Additional subject cards */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Content</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Number Theory Card */}
+              <Link href="/olympiad/content/number-theory">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-blue-600 text-2xl font-semibold">NT</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Number Theory</h3>
+                    <p className="text-sm text-gray-600 text-center">More content coming soon</p>
+                  </div>
+                </motion.div>
+              </Link>
+
+              {/* Geometry Card */}
+              <Link href="/olympiad/content/geometry">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-green-600 text-2xl font-semibold">G</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Geometry</h3>
+                    <p className="text-sm text-gray-600 text-center">More content coming soon</p>
+                  </div>
+                </motion.div>
+              </Link>
+
+              {/* Algebra Card */}
+              <Link href="/olympiad/content/algebra">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-red-600 text-2xl font-semibold">A</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Algebra</h3>
+                    <p className="text-sm text-gray-600 text-center">More content coming soon</p>
+                  </div>
+                </motion.div>
+              </Link>
+
+              {/* Combinatorics Card */}
+              <Link href="/olympiad/content/combinatorics">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                      <span className="text-purple-600 text-2xl font-semibold">C</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Combinatorics</h3>
+                    <p className="text-sm text-gray-600 text-center">More content coming soon</p>
+                  </div>
+                </motion.div>
+              </Link>
             </div>
-          </motion.div>
+          </>
         ) : (
           <>
             {/* Navigation buttons */}
