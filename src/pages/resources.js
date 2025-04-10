@@ -67,7 +67,8 @@ export default function Resources() {
           <AssignmentSubmission 
             assignmentUrl={selectedAssignment.url}
             dueDate={selectedAssignment.dueDate}
-            assignmentId={selectedAssignment.id} 
+            assignmentId={selectedAssignment.id.replace('assignment', '')} 
+            folderId={selectedAssignment.folderId}
           />
         </div>
       );

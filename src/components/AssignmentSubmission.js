@@ -7,11 +7,8 @@ import { format } from 'date-fns';
 // Hardcode the client ID temporarily for testing
 const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-// Folder IDs for different assignments
-const FOLDER_IDS = {
-  default: '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF',
-  '4.1': '1AXlHx988LnLfuci0oWmAkZfEsryw5wAj'
-};
+// Default folder ID to use if none is provided in the assignment data
+const DEFAULT_FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF';
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -22,29 +19,25 @@ console.log('Environment Variables:', {
   NEXT_PUBLIC_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
   CLIENT_ID,
   API_KEY,
-  FOLDER_IDS,
+  DEFAULT_FOLDER_ID,
 });
 
-export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId }) {
-  console.log('AssignmentSubmission props:', { assignmentUrl, dueDate, assignmentId });
+export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmentId, folderId }) {
+  console.log('AssignmentSubmission props:', { assignmentUrl, dueDate, assignmentId, folderId });
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const [gapiInited, setGapiInited] = useState(false);
   const [gisInited, setGisInited] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
   
-  // Get the appropriate folder ID based on assignment ID
-  const getFolderId = () => {
-    return FOLDER_IDS[assignmentId] || FOLDER_IDS.default;
-  };
+  // Use the provided folder ID or fall back to default
+  const targetFolderId = folderId || DEFAULT_FOLDER_ID;
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
-    const currentFolderId = getFolderId();
-    
     console.log('Environment variables:', {
       CLIENT_ID,
       API_KEY,
-      currentFolderId
+      targetFolderId
     });
 
     const initializeGoogleAPIs = async () => {
@@ -103,7 +96,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
     if (scriptsLoaded) {
       initializeGoogleAPIs();
     }
-  }, [scriptsLoaded, assignmentId]);
+  }, [scriptsLoaded, targetFolderId]);
   
   const [enrollmentNo, setEnrollmentNo] = useState('');
   const [studentName, setStudentName] = useState('');
@@ -165,7 +158,6 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
 
     try {
       setUploadProgress(10);
-      const currentFolderId = getFolderId();
 
       // Check if we need to get access token
       if (!window.gapi.client.getToken()) {
@@ -190,7 +182,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       const metadata = {
         name: filename,
         mimeType: 'application/pdf',
-        parents: [currentFolderId]
+        parents: [targetFolderId]
       };
 
       // Read file as ArrayBuffer
@@ -204,10 +196,10 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       setUploadProgress(30);
 
       console.log('Starting Google Drive upload...');
-      console.log('Folder ID:', currentFolderId);
+      console.log('Folder ID:', targetFolderId);
       console.log('Metadata:', metadata);
       
-      if (!currentFolderId) {
+      if (!targetFolderId) {
         throw new Error('Google Drive folder ID is not configured');
       }
 
@@ -252,7 +244,7 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
       console.log('Step 3: Moving to target folder...');
       await window.gapi.client.drive.files.update({
         fileId: fileData.id,
-        addParents: currentFolderId,
+        addParents: targetFolderId,
         fields: 'id, parents, webViewLink'
       });
       
