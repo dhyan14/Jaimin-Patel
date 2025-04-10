@@ -7,7 +7,8 @@ import { format } from 'date-fns';
 // Hardcode the client ID temporarily for testing
 const CLIENT_ID = '530516674684-hco6pk5okr298eaulh3uobv67vfsnogh.apps.googleusercontent.com';
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Updated folder ID for assignment storage
+const DEFAULT_FOLDER_ID = '1P7baVeMDMG85B9GRZK6Ugb6i6pHEehcF'; // Default folder ID for assignment storage
+const ASSIGNMENT_4_1_FOLDER_ID = '1AXlHx988LnLfuci0oWmAkZfEsryw5wAj'; // Specific folder ID for assignment 4.1
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -27,6 +28,9 @@ export default function AssignmentSubmission({ assignmentUrl, dueDate, assignmen
   const [gapiInited, setGapiInited] = useState(false);
   const [gisInited, setGisInited] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
+  
+  // Determine which folder ID to use based on assignmentId
+  const FOLDER_ID = assignmentId === "4.1" ? ASSIGNMENT_4_1_FOLDER_ID : DEFAULT_FOLDER_ID;
 
   // Initialize Google APIs after scripts are loaded
   useEffect(() => {
