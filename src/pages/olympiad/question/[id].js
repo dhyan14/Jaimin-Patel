@@ -154,7 +154,7 @@ export default function QuestionDetail() {
           className="bg-white rounded-xl shadow-md p-8 mb-8"
         >
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {question.id === 1 ? "IMO Participation Guide" : question.id === 5 ? "Material For Mathematical Olympiad" : `Question ${question.id}`}
+            {question.id === 1 ? "IMO Participation Guide" : question.id === 5 ? "Preparation Guide" : `Question ${question.id}`}
           </h1>
           <p className="text-gray-700 mb-6 font-bold">{question.question}</p>
         </motion.div>
@@ -167,38 +167,14 @@ export default function QuestionDetail() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-xl shadow-md p-8 mb-8"
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Reference Materials</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Preparation Guide</h2>
               <div className="text-gray-700 prose max-w-none">
                 <div dangerouslySetInnerHTML={{ __html: question.answer }} />
               </div>
             </motion.div>
 
-            {/* Content title first */}
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Content</h2>
-            
-            {/* Problem Solving Card */}
-            <div className="flex justify-center mb-8">
-              <Link href="/olympiad/content/problem-solving">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg max-w-md"
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="text-yellow-600 w-8 h-8">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Problem Solving</h3>
-                    <p className="text-sm text-gray-600 text-center">Strategies, techniques and practice examples</p>
-                  </div>
-                </motion.div>
-              </Link>
-            </div>
-
-            {/* Four subject cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* First row: Number Theory, Problem Solving, Geometry */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {/* Number Theory Card */}
               <Link href="/olympiad/content/number-theory">
                 <motion.div
@@ -212,6 +188,25 @@ export default function QuestionDetail() {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Number Theory</h3>
                     <p className="text-sm text-gray-600 text-center">More content coming soon</p>
+                  </div>
+                </motion.div>
+              </Link>
+
+              {/* Problem Solving Card */}
+              <Link href="/olympiad/content/problem-solving">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white rounded-xl shadow-md p-6 cursor-pointer transition-all hover:shadow-lg"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="text-yellow-600 w-8 h-8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Problem Solving</h3>
+                    <p className="text-sm text-gray-600 text-center">More Content Coming Soon</p>
                   </div>
                 </motion.div>
               </Link>
@@ -232,7 +227,10 @@ export default function QuestionDetail() {
                   </div>
                 </motion.div>
               </Link>
+            </div>
 
+            {/* Second row: Algebra, Combinatorics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Algebra Card */}
               <Link href="/olympiad/content/algebra">
                 <motion.div
