@@ -154,12 +154,15 @@ export default function QuestionDetail() {
           className="bg-white rounded-xl shadow-md p-8 mb-8"
         >
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {question.id === 1 ? "IMO Participation Guide" : question.id === 5 ? "Preparation Guide" : `Question ${question.id}`}
+            {question.id === 1 ? "IMO Participation Guide" : 
+             question.id === 5 ? "Preparation Guide" : 
+             question.id === 6 ? "Past Papers for Olympiad" : 
+             `Question ${question.id}`}
           </h1>
           <p className="text-gray-700 mb-6 font-bold">{question.question}</p>
         </motion.div>
         
-        {/* Check if it's Material For Mathematical Olympiad */}
+        {/* Check if it's one of the special questions */}
         {question.id === 5 ? (
           <>
             <motion.div
@@ -167,7 +170,7 @@ export default function QuestionDetail() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-xl shadow-md p-8 mb-8"
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Preparation Guide</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Olympiad Preparation Guide</h2>
               <div className="text-gray-700 prose max-w-none">
                 <div dangerouslySetInnerHTML={{ __html: question.answer }} />
               </div>
@@ -206,7 +209,7 @@ export default function QuestionDetail() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Problem Solving</h3>
-                    <p className="text-sm text-gray-600 text-center">More Content Coming Soon</p>
+                    <p className="text-sm text-gray-600 text-center">More content coming soon</p>
                   </div>
                 </motion.div>
               </Link>
@@ -265,6 +268,18 @@ export default function QuestionDetail() {
                 </motion.div>
               </Link>
             </div>
+          </>
+        ) : question.id === 6 ? (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-md p-8 mb-8"
+            >
+              <div className="text-gray-700 prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: question.answer }} />
+              </div>
+            </motion.div>
           </>
         ) : (
           <>
