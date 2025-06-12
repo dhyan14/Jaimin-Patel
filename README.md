@@ -1,54 +1,55 @@
-# Educational Resources Portal
+# LaTeX Beamer Editor with AI
 
-A Next.js application for accessing educational resources and course materials.
+An AI-powered LaTeX Beamer presentation editor built with Next.js and Google's Gemini AI.
 
 ## Features
 
-- Course selection interface
-- Semester-wise content organization
-- Unit-wise PDF materials
-- Embedded Google Drive PDF viewer
-- Responsive design
-- Mobile-friendly interface
+- Monaco Editor for LaTeX editing
+- AI-powered suggestions and improvements
+- Real-time preview
+- TypeScript support
+- Modern UI with Tailwind CSS
+
+## Deployment on Vercel
+
+1. Fork this repository
+2. Connect your fork to Vercel
+3. Add the following environment variable in Vercel:
+   - `GOOGLE_API_KEY`: Your Google AI API key for Gemini
+
+### Environment Variables
+
+Make sure to add the following environment variable in your Vercel project settings:
+
+- `GOOGLE_API_KEY`: Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+## Project Structure
+
+```
+src/
+├── ai-tool/
+│   ├── components/
+│   │   └── ErrorMessage.tsx
+│   ├── constants.ts
+│   └── types.ts
+├── pages/
+│   ├── ai-tool/
+│   │   └── index.tsx
+│   └── api/
+│       └── ai-tool/
+│           └── update-presentation.ts
+└── styles/
+    └── globals.css
+```
 
 ## Tech Stack
 
-- Next.js 13
-- React 18
+- Next.js
+- TypeScript
+- Monaco Editor
+- Google Generative AI (Gemini)
 - Tailwind CSS
-- Vercel Deployment
 
-## Deployment Steps
+## License
 
-1. Push this repository to GitHub
-2. Go to [Vercel](https://vercel.com)
-3. Click "New Project"
-4. Import your GitHub repository
-5. Vercel will automatically detect Next.js configuration
-6. Click "Deploy"
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
-
-## Environment Variables
-
-No environment variables are required for this project.
-
-## Notes
-
-- PDFs are served through Google Drive's preview functionality
-- The application is optimized for Vercel deployment
-- Built with modern React practices and hooks
+MIT
