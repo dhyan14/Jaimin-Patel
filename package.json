@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.2.1",
     "@heroicons/react": "^2.0.18",
+    "@monaco-editor/react": "^4.6.0",
     "@tailwindcss/typography": "^0.5.9",
     "autoprefixer": "^10.4.0",
     "date-fns": "^4.1.0",
@@ -17,6 +19,7 @@
     "framer-motion": "^10.16.0",
     "googleapis": "^148.0.0",
     "katex": "^0.16.21",
+    "monaco-editor": "^0.47.0",
     "mongodb": "^6.15.0",
     "next": "^13.4.0",
     "postcss": "^8.4.0",
