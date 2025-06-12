@@ -37,9 +37,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const ai = new GoogleGenerativeAI({ apiKey });
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 
-    const systemPromptInstruction = `You are an expert LaTeX Beamer presentation editor.
+    const prompt = `You are an expert LaTeX Beamer presentation editor.
 You will be given an existing LaTeX Beamer code and a user instruction.
 Your task is to modify the given LaTeX code based on the user's instruction and return the COMPLETE, updated, and compilable LaTeX Beamer code.
 PRESERVE THE EXISTING PREAMBLE AND DOCUMENT STRUCTURE UNLESS THE USER SPECIFICALLY ASKS TO CHANGE IT.
@@ -47,19 +48,18 @@ Ensure all necessary Beamer document structure elements (like \\begin{document},
 The output MUST be ONLY the raw LaTeX code. Do not include any explanatory text, markdown formatting (like \`\`\`latex ... \`\`\` marks), or any other content before \`\\documentclass{beamer}\` or after \`\\end{document}\`.
 If the user asks for something that requires a package not currently in the preamble (e.g., specific table formatting, complex diagrams), try to add the necessary package to the preamble if it's a common LaTeX package.
 Assume the user wants valid, modern Beamer LaTeX.
-Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`. Do not return only the changed snippet or a partial update; the complete, runnable LaTeX document is required.`;
+Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`. Do not return only the changed snippet or a partial update; the complete, runnable LaTeX document is required.
 
-    const userPromptContent = `Existing LaTeX Code:\n${currentLatexCode}\n\nUser instruction for modification:\n${userInstruction}`;
+Existing LaTeX Code:
+${currentLatexCode}
 
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL_NAME,
-      contents: userPromptContent,
-      config: {
-        systemInstruction: systemPromptInstruction,
-      }
-    });
+User instruction for modification:
+${userInstruction}`;
 
-    const updatedLatexCode = cleanLatexResponse(response.text);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const updatedLatexCode = cleanLatexResponse(response.text());
+    
     return res.status(200).json({ updatedLatexCode });
 
   } catch (error) {

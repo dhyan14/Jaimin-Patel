@@ -37,9 +37,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const ai = new GoogleGenerativeAI({ apiKey });
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 
-    const systemPromptForImage = `You are an expert LaTeX Beamer presentation creator, specializing in integrating visual information into presentations.
+    const prompt = `You are an expert LaTeX Beamer presentation creator, specializing in integrating visual information into presentations.
 You will be given:
 1. An existing LaTeX Beamer presentation code.
 2. An image.
@@ -57,30 +58,27 @@ Ensure all necessary Beamer document structure elements are correctly maintained
 The output MUST be ONLY the raw LaTeX code. Do not include any explanatory text, markdown formatting, or any other content outside the LaTeX document.
 When including an image, use a placeholder like "\\includegraphics[width=0.8\\textwidth]{placeholder_image.png}" or similar. The user will replace 'placeholder_image.png' with the actual filename. Create a \`\\frametitle\` that is relevant to the image or the user's prompt.
 If the image appears to be a graph or diagram, describe its key features or data points. If it's a photo, describe the scene or main subjects.
-Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`.`;
+Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`.
 
-    const imagePart = {
+Current LaTeX Code:
+${currentLatexCode}
+
+User instruction for image (optional):
+${imagePrompt || 'No specific instruction. Analyze the image and generate a relevant new frame based on it, integrating it into the current LaTeX code. Provide a descriptive frame title.'}`;
+
+    // Process the image data
+    const imageBase64 = imageData.split(',')[1]; // Remove the data URL prefix
+    const imageObject = {
       inlineData: {
-        mimeType: imageMimeType,
-        data: imageData.split(',')[1], // Remove the data URL prefix
-      },
+        data: imageBase64,
+        mimeType: imageMimeType
+      }
     };
 
-    const textPromptForImage = `Current LaTeX Code:\n${currentLatexCode}\n\nUser instruction for image (optional):\n${imagePrompt || 'No specific instruction. Analyze the image and generate a relevant new frame based on it, integrating it into the current LaTeX code. Provide a descriptive frame title.'}`;
-    const textPart = { text: textPromptForImage };
-
-    const model = ai.getGenerativeModel({ model: GEMINI_MODEL_NAME });
-    const result = await model.generateContent({
-      contents: [textPart, imagePart],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 32,
-        topP: 1,
-        maxOutputTokens: 4096,
-      },
-    });
-
-    const updatedLatexCode = cleanLatexResponse(result.response.text());
+    const result = await model.generateContent([prompt, imageObject]);
+    const response = await result.response;
+    const updatedLatexCode = cleanLatexResponse(response.text());
+    
     return res.status(200).json({ updatedLatexCode });
 
   } catch (error) {

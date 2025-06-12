@@ -37,9 +37,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const ai = new GoogleGenerativeAI({ apiKey });
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 
-    const systemPromptForPdf = `You are an expert LaTeX Beamer presentation creator, specializing in incorporating content from PDF documents.
+    const prompt = `You are an expert LaTeX Beamer presentation creator, specializing in incorporating content from PDF documents.
 You will be given:
 1. An existing LaTeX Beamer presentation code.
 2. A PDF document.
@@ -56,30 +57,27 @@ PRESERVE THE EXISTING PREAMBLE AND DOCUMENT STRUCTURE. Only add to the document 
 Ensure all necessary Beamer document structure elements are correctly maintained. Frame titles should be relevant.
 The output MUST be ONLY the raw LaTeX code. Do not include any explanatory text, markdown formatting, or any other content outside the LaTeX document.
 If the PDF contains images or complex layouts you cannot directly translate to LaTeX, describe them or extract textual information related to them.
-Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`.`;
+Critically, ensure you return the *entire document content*, from \`\\documentclass\` to \`\\end{document}\`.
 
-    const pdfFilePart = {
+Current LaTeX Code:
+${currentLatexCode}
+
+User instruction for PDF (optional):
+${pdfPrompt || 'No specific instruction. Analyze the PDF and generate relevant new frames based on its content, integrating it into the current LaTeX code. Provide descriptive frame titles.'}`;
+
+    // Process the PDF data
+    const pdfBase64 = pdfData.split(',')[1]; // Remove the data URL prefix
+    const pdfObject = {
       inlineData: {
-        mimeType: pdfMimeType,
-        data: pdfData.split(',')[1], // Remove the data URL prefix
-      },
+        data: pdfBase64,
+        mimeType: pdfMimeType
+      }
     };
 
-    const textPromptForPdf = `Current LaTeX Code:\n${currentLatexCode}\n\nUser instruction for PDF (optional):\n${pdfPrompt || 'No specific instruction. Analyze the PDF and generate relevant new frames based on its content, integrating it into the current LaTeX code. Provide descriptive frame titles.'}`;
-    const textPart = { text: textPromptForPdf };
-
-    const model = ai.getGenerativeModel({ model: GEMINI_MODEL_NAME });
-    const result = await model.generateContent({
-      contents: [textPart, pdfFilePart],
-      generationConfig: {
-        temperature: 0.7,
-        topK: 32,
-        topP: 1,
-        maxOutputTokens: 4096,
-      },
-    });
-
-    const updatedLatexCode = cleanLatexResponse(result.response.text());
+    const result = await model.generateContent([prompt, pdfObject]);
+    const response = await result.response;
+    const updatedLatexCode = cleanLatexResponse(response.text());
+    
     return res.status(200).json({ updatedLatexCode });
 
   } catch (error) {
