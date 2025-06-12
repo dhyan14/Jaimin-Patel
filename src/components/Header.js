@@ -28,7 +28,7 @@ export default function Header() {
     { name: 'Home', href: '/', icon: <AcademicCapIcon className="w-5 h-5" /> },
     { name: 'Resources', href: '/resources', icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: 'Olympiad', href: '/olympiad', icon: <BeakerIcon className="w-5 h-5" /> },
-    { name: 'LaTeX Editor', href: '/latex-editor', icon: <DocumentTextIcon className="w-5 h-5" /> },
+    { name: 'LaTeX Editor', href: '/ai-presentation-maker', icon: <DocumentTextIcon className="w-5 h-5" /> },
     { name: 'About', href: '/about', icon: <LightBulbIcon className="w-5 h-5" /> },
   ];
 
