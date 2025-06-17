@@ -25,22 +25,15 @@ export default function Header() {
     };
   }, [scrolled]);
 
-  const latexTools = [
-    { name: 'AI Presentation Maker', href: '/latex-tools/ai-presentation-maker' },
-    { name: 'LaTeX Polisher', href: '/latex-tools/latex-polisher' },
-    { name: 'Beamer to Notes Converter', href: '/latex-tools/beamer-to-notes' },
-    { name: 'Interactive Lecture Notes Creator', href: '/latex-tools/lecture-notes-creator' },
-  ];
-
   const navigation = [
     { name: 'Home', href: '/', icon: <AcademicCapIcon className="w-5 h-5" /> },
     { name: 'Resources', href: '/resources', icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: 'Olympiad', href: '/olympiad', icon: <BeakerIcon className="w-5 h-5" /> },
+    { name: 'LaTeX Tools', href: '/latex-tools', icon: <DocumentTextIcon className="w-5 h-5" /> },
     { name: 'About', href: '/about', icon: <LightBulbIcon className="w-5 h-5" /> },
   ];
 
-  const isActive = (path) => router.pathname === path;
-  const isLatexToolActive = () => router.pathname.startsWith('/latex-tools');
+  const isActive = (path) => router.pathname === path || router.pathname.startsWith(path + '/');
 
   // Animation variants
   const navItemVariants = {
@@ -187,69 +180,6 @@ export default function Header() {
                 </Link>
               </motion.div>
             ))}
-
-            {/* LaTeX Tools Dropdown */}
-            <motion.div
-              className="relative"
-              onMouseEnter={() => setIsLatexMenuOpen(true)}
-              onMouseLeave={() => setIsLatexMenuOpen(false)}
-              variants={navItemVariants}
-              initial="hidden"
-              animate="visible"
-              whileHover="hover"
-            >
-              <button
-                className={`text-lg font-medium transition-all relative px-2 py-1 flex items-center space-x-1 ${
-                  isLatexToolActive()
-                    ? 'text-white font-semibold'
-                    : 'text-green-50 hover:text-white'
-                }`}
-              >
-                <motion.span 
-                  className={`inline-block ${
-                    isLatexToolActive()
-                      ? 'text-green-200'
-                      : 'text-green-200/70'
-                  }`}
-                  whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <DocumentTextIcon className="w-5 h-5" />
-                </motion.span>
-                <span>LaTeX Tools</span>
-                <ChevronDownIcon className="w-4 h-4 ml-1" />
-                {isLatexToolActive() && (
-                  <motion.div
-                    layoutId="underline"
-                    className="absolute bottom-0 left-0 w-full h-0.5 bg-white"
-                  />
-                )}
-              </button>
-
-              <AnimatePresence>
-                {isLatexMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-0 mt-2 w-64 rounded-lg bg-white shadow-lg py-2 text-gray-800"
-                  >
-                    {latexTools.map((tool, index) => (
-                      <Link
-                        key={tool.name}
-                        href={tool.href}
-                        className={`block px-4 py-2 text-sm hover:bg-green-50 transition-colors ${
-                          isActive(tool.href) ? 'bg-green-50 text-green-700' : ''
-                        }`}
-                      >
-                        {tool.name}
-                      </Link>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
           </nav>
 
           {/* Mobile menu button */}
@@ -311,28 +241,6 @@ export default function Header() {
                     </span>
                   </Link>
                 ))}
-                
-                {/* LaTeX Tools in mobile menu */}
-                <div className="py-2">
-                  <div className="text-lg text-white font-semibold mb-2 flex items-center">
-                    <DocumentTextIcon className="w-5 h-5 mr-2" />
-                    LaTeX Tools
-                  </div>
-                  {latexTools.map((tool) => (
-                    <Link
-                      key={tool.name}
-                      href={tool.href}
-                      className={`block py-2 pl-7 text-base ${
-                        isActive(tool.href)
-                          ? 'text-white font-semibold'
-                          : 'text-green-50 hover:text-white'
-                      }`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {tool.name}
-                    </Link>
-                  ))}
-                </div>
               </div>
             </motion.div>
           )}
