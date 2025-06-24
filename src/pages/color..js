@@ -14,7 +14,7 @@ export default function Game() {
       border: 'none'
     }}>
       <iframe 
-        src="https://color-tiling.vercel.app/"
+        src="https://color-tiling-sooty.vercel.app/"
         style={{
           width: '100%',
           height: '100%',
