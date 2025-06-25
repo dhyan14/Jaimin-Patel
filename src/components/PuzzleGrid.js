@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece }) => {
-  const [placedPieces, setPlacedPieces] = useState([]);
+const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece, placedPieces }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
 
   // Check if a cell is part of a placed piece
@@ -97,7 +96,6 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece }) =
         cells
       };
       const newPlacedPieces = [...placedPieces, newPiece];
-      setPlacedPieces(newPlacedPieces);
       
       // Update game state
       const newGameState = gameState.map((r, i) => 

@@ -32,6 +32,7 @@ const PuzzleGame = () => {
     }
   };
 
+  // Initialize or reset puzzle when currentPuzzle changes
   useEffect(() => {
     const initialState = initializePuzzle(currentPuzzle);
     setGameState(initialState);
@@ -42,12 +43,12 @@ const PuzzleGame = () => {
   }, [currentPuzzle]);
 
   const handleStateChange = (newGameState, newPlacedPieces) => {
-    setGameState(newGameState);
-    setPlacedPieces(newPlacedPieces);
-    
-    // Add to history
+    // Add to history, truncating any future states if we're not at the end
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push({ grid: newGameState, pieces: newPlacedPieces });
+    
+    setGameState(newGameState);
+    setPlacedPieces(newPlacedPieces);
     setHistory(newHistory);
     setHistoryIndex(historyIndex + 1);
   };
@@ -55,8 +56,8 @@ const PuzzleGame = () => {
   const handleUndo = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
       const { grid, pieces } = history[newIndex];
+      setHistoryIndex(newIndex);
       setGameState(grid);
       setPlacedPieces(pieces);
     }
@@ -65,8 +66,8 @@ const PuzzleGame = () => {
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
       const { grid, pieces } = history[newIndex];
+      setHistoryIndex(newIndex);
       setGameState(grid);
       setPlacedPieces(pieces);
     }
@@ -156,15 +157,18 @@ const PuzzleGame = () => {
                 gameState={gameState}
                 onStateChange={handleStateChange}
                 selectedPiece={selectedPiece}
+                placedPieces={placedPieces}
               />
             </div>
 
             {/* Control Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <div className="flex justify-center gap-4 mb-8">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                className={`px-6 py-2 bg-blue-500 text-white rounded-full shadow-lg transition-colors ${
+                  historyIndex <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+                }`}
                 onClick={handleUndo}
                 disabled={historyIndex <= 0}
               >
@@ -173,7 +177,9 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-2 bg-green-500 text-white rounded-full shadow-lg hover:bg-green-600 transition-colors"
+                className={`px-6 py-2 bg-green-500 text-white rounded-full shadow-lg transition-colors ${
+                  historyIndex >= history.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600'
+                }`}
                 onClick={handleRedo}
                 disabled={historyIndex >= history.length - 1}
               >
@@ -190,7 +196,7 @@ const PuzzleGame = () => {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between">
+            <div className="flex justify-center gap-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
