@@ -18,7 +18,7 @@ const DominoPiece = ({ isSelected, onClick, orientation = 'horizontal' }) => {
   );
 };
 
-const TetrominoPiece = ({ isSelected, onClick, rotation }) => {
+const TetrominoPiece = ({ isSelected, onClick, rotation, displayRotation }) => {
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -28,7 +28,7 @@ const TetrominoPiece = ({ isSelected, onClick, rotation }) => {
         isSelected ? 'ring-2 ring-yellow-400' : 'hover:ring-1 hover:ring-purple-300'
       } w-[120px] h-[120px]`}
     >
-      <div style={{ transform: `rotate(${rotation}deg)` }}>
+      <div style={{ transform: `rotate(${displayRotation}deg)` }}>
         <svg width="96" height="96" viewBox="0 0 96 96">
           <g transform="translate(12, 12)">
             {/* Three blocks on top */}
@@ -65,18 +65,22 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
     );
   }
 
-  const rotations = [0, 90, 180, 270];
+  // Visual order stays the same [0, 90, 180, 270]
+  const displayRotations = [0, 90, 180, 270];
+  // Functional rotations with 2nd and 4th swapped [0, 270, 180, 90]
+  const functionalRotations = [0, 270, 180, 90];
 
   return (
     <div className="flex flex-col gap-4 items-center">
       <h3 className="text-lg font-semibold text-gray-700">Available Rotations:</h3>
       <div className="grid grid-cols-2 gap-4 p-4 bg-gray-100 rounded-xl">
-        {rotations.map((rotation) => (
+        {displayRotations.map((displayRotation, index) => (
           <TetrominoPiece
-            key={rotation}
-            isSelected={selectedPiece?.type === 'tetromino' && selectedPiece?.rotation === rotation}
-            onClick={() => onPieceSelect({ type: 'tetromino', rotation })}
-            rotation={rotation}
+            key={displayRotation}
+            isSelected={selectedPiece?.type === 'tetromino' && selectedPiece?.rotation === functionalRotations[index]}
+            onClick={() => onPieceSelect({ type: 'tetromino', rotation: functionalRotations[index] })}
+            rotation={functionalRotations[index]}
+            displayRotation={displayRotation}
           />
         ))}
       </div>
