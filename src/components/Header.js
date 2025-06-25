@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Bars3Icon, XMarkIcon, AcademicCapIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, DocumentTextIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, AcademicCapIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, DocumentTextIcon, ChevronDownIcon, PuzzlePieceIcon } from '@heroicons/react/24/outline';
 import MathEquation from './MathEquation';
 
 export default function Header() {
@@ -30,6 +30,7 @@ export default function Header() {
     { name: 'Resources', href: '/resources', icon: <BookOpenIcon className="w-5 h-5" /> },
     { name: 'Olympiad', href: '/olympiad', icon: <BeakerIcon className="w-5 h-5" /> },
     { name: 'LaTeX Tools', href: '/latex-tools', icon: <DocumentTextIcon className="w-5 h-5" /> },
+    { name: 'Puzzle Game', href: '/puzzle-game', icon: <PuzzlePieceIcon className="w-5 h-5" /> },
     { name: 'About', href: '/about', icon: <LightBulbIcon className="w-5 h-5" /> },
   ];
 
