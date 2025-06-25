@@ -20,79 +20,77 @@ const DominoPiece = ({ isSelected, onClick, orientation = 'horizontal' }) => {
 
 const TetrominoPiece = ({ isSelected, onClick, rotation }) => {
   const getGridStyle = () => {
+    const baseSize = 'w-[200px] h-[200px]';
+    const cellSize = 'w-14 h-14';
+    
     switch (rotation) {
-      case 0: // T
+      case 0: // T shape (top)
         return {
-          gridTemplate: `
-            "a b c"
-            ". d ."
-          `,
-          width: '156px',
-          height: '104px'
+          layout: `
+            <div class="absolute left-1/2 -translate-x-1/2 top-4 flex gap-2">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+            <div class="absolute left-1/2 -translate-x-1/2 top-24">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+          `
         };
-      case 90: // ⊢
+      case 90: // T shape (right)
         return {
-          gridTemplate: `
-            ". b ."
-            "a b ."
-            ". b ."
-          `,
-          width: '104px',
-          height: '156px'
+          layout: `
+            <div class="absolute left-8 top-4 flex gap-2">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+            <div class="absolute left-[7.5rem] top-[5.5rem]">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+          `
         };
-      case 180: // ⊥
+      case 180: // T shape (bottom)
         return {
-          gridTemplate: `
-            ". b ."
-            "a b c"
-          `,
-          width: '156px',
-          height: '104px'
+          layout: `
+            <div class="absolute left-1/2 -translate-x-1/2 top-4 flex gap-2">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+            <div class="absolute left-4 top-[4.5rem]">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+          `
         };
-      case 270: // ⊣
+      case 270: // T shape (left)
         return {
-          gridTemplate: `
-            ". b ."
-            ". b a"
-            ". b ."
-          `,
-          width: '104px',
-          height: '156px'
+          layout: `
+            <div class="absolute left-8 top-4 flex gap-2">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+            <div class="absolute left-8 top-[5.5rem]">
+              <div class="${cellSize} bg-purple-500 rounded-lg"></div>
+            </div>
+          `
         };
       default:
-        return {};
+        return { layout: '' };
     }
   };
 
-  const style = getGridStyle();
+  const { layout } = getGridStyle();
 
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`cursor-pointer p-4 bg-white rounded-lg shadow-md ${
+      className={`relative cursor-pointer bg-white rounded-xl shadow-md ${
         isSelected ? 'ring-4 ring-yellow-400' : 'hover:ring-2 hover:ring-purple-300'
-      }`}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gap: '4px',
-          ...style
-        }}
-      >
-        {Array(4).fill(null).map((_, i) => (
-          <div
-            key={i}
-            className="w-12 h-12 bg-purple-500 rounded-md border-2 border-purple-600"
-            style={{
-              gridArea: String.fromCharCode(97 + i) // 'a', 'b', 'c', 'd'
-            }}
-          />
-        ))}
-      </div>
-    </motion.div>
+      } w-[200px] h-[200px]`}
+      dangerouslySetInnerHTML={{ __html: layout }}
+    />
   );
 };
 
