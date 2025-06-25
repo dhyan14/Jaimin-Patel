@@ -73,7 +73,7 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
   return (
     <div className="flex flex-col gap-4 items-center">
       <h3 className="text-lg font-semibold text-gray-700">Available Rotations:</h3>
-      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-100 rounded-xl">
+      <div className="flex gap-4 p-4 bg-gray-100 rounded-xl">
         {displayRotations.map((displayRotation, index) => (
           <TetrominoPiece
             key={displayRotation}
