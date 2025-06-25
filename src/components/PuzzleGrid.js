@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
-  const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedPiece, setSelectedPiece] = useState(null);
   const [placedPieces, setPlacedPieces] = useState([]);
-  const [rotation, setRotation] = useState(0); // For T-shaped tetrominos
+  const [hoveredCell, setHoveredCell] = useState(null);
 
   // Check if a cell is part of a placed piece
   const isPartOfPlacedPiece = (row, col) => {
@@ -13,59 +13,64 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
     );
   };
 
-  // Check if a domino can be placed horizontally
-  const canPlaceDominoHorizontal = (row, col) => {
-    if (col >= gameState[0].length - 1) return false;
-    if (gameState[row][col] === 'blocked' || gameState[row][col + 1] === 'blocked') return false;
-    return !isPartOfPlacedPiece(row, col) && !isPartOfPlacedPiece(row, col + 1);
-  };
+  // Get cells that would be occupied by a piece at given position
+  const getPieceCells = (row, col, piece) => {
+    if (!piece) return [];
 
-  // Check if a domino can be placed vertically
-  const canPlaceDominoVertical = (row, col) => {
-    if (row >= gameState.length - 1) return false;
-    if (gameState[row][col] === 'blocked' || gameState[row + 1][col] === 'blocked') return false;
-    return !isPartOfPlacedPiece(row, col) && !isPartOfPlacedPiece(row + 1, col);
-  };
-
-  // Get T-tetromino cells based on rotation
-  const getTTetrominoCells = (row, col) => {
-    switch (rotation) {
-      case 0: // ⊤
+    if (piece.type === 'domino') {
+      if (piece.orientation === 'horizontal') {
         return [
-          { row: row, col: col },
-          { row: row, col: col - 1 },
-          { row: row, col: col + 1 },
-          { row: row + 1, col: col }
+          { row, col },
+          { row, col: col + 1 }
         ];
-      case 90: // ⊢
+      } else {
         return [
-          { row: row, col: col },
-          { row: row - 1, col: col },
-          { row: row + 1, col: col },
-          { row: row, col: col + 1 }
+          { row, col },
+          { row: row + 1, col }
         ];
-      case 180: // ⊥
-        return [
-          { row: row, col: col },
-          { row: row, col: col - 1 },
-          { row: row, col: col + 1 },
-          { row: row - 1, col: col }
-        ];
-      case 270: // ⊣
-        return [
-          { row: row, col: col },
-          { row: row - 1, col: col },
-          { row: row + 1, col: col },
-          { row: row, col: col - 1 }
-        ];
-      default:
-        return [];
+      }
+    } else if (piece.type === 'tetromino') {
+      switch (piece.rotation) {
+        case 0: // ⊤
+          return [
+            { row, col },
+            { row, col: col - 1 },
+            { row, col: col + 1 },
+            { row: row + 1, col }
+          ];
+        case 90: // ⊢
+          return [
+            { row, col },
+            { row: row - 1, col },
+            { row: row + 1, col },
+            { row, col: col + 1 }
+          ];
+        case 180: // ⊥
+          return [
+            { row, col },
+            { row, col: col - 1 },
+            { row, col: col + 1 },
+            { row: row - 1, col }
+          ];
+        case 270: // ⊣
+          return [
+            { row, col },
+            { row: row - 1, col },
+            { row: row + 1, col },
+            { row, col: col - 1 }
+          ];
+        default:
+          return [];
+      }
     }
+    return [];
   };
 
-  // Check if a T-tetromino can be placed
-  const canPlaceTTetromino = (row, col) => {
-    const cells = getTTetrominoCells(row, col);
+  // Check if a piece can be placed at given position
+  const canPlacePiece = (row, col, piece) => {
+    if (!piece) return false;
+    
+    const cells = getPieceCells(row, col, piece);
     return cells.every(cell => {
       const isValid = cell.row >= 0 && 
                      cell.row < gameState.length && 
@@ -79,47 +84,23 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
 
   const handleCellClick = (row, col) => {
     if (gameState[row][col] === 'blocked') return;
+    if (!selectedPiece) return;
 
-    if (puzzleNumber <= 2) { // Domino puzzles
-      if (selectedCell) {
-        // Try to place a domino
-        const selectedRow = selectedCell.row;
-        const selectedCol = selectedCell.col;
-
-        if ((Math.abs(row - selectedRow) === 1 && col === selectedCol) ||
-            (Math.abs(col - selectedCol) === 1 && row === selectedRow)) {
-          // Valid domino placement
-          const newPiece = {
-            type: 'domino',
-            cells: [
-              { row: selectedRow, col: selectedCol },
-              { row, col }
-            ]
-          };
-          setPlacedPieces([...placedPieces, newPiece]);
-          setSelectedCell(null);
-        } else {
-          setSelectedCell({ row, col });
-        }
-      } else {
-        setSelectedCell({ row, col });
-      }
-    } else { // T-tetromino puzzles
-      if (canPlaceTTetromino(row, col)) {
-        const newPiece = {
-          type: 'tetromino',
-          cells: getTTetrominoCells(row, col),
-          rotation
-        };
-        setPlacedPieces([...placedPieces, newPiece]);
-      }
+    if (canPlacePiece(row, col, selectedPiece)) {
+      const newPiece = {
+        ...selectedPiece,
+        cells: getPieceCells(row, col, selectedPiece)
+      };
+      setPlacedPieces([...placedPieces, newPiece]);
     }
   };
 
-  const handleRotate = () => {
-    if (puzzleNumber > 2) { // Only for T-tetromino puzzles
-      setRotation((rotation + 90) % 360);
-    }
+  const handleCellHover = (row, col) => {
+    setHoveredCell({ row, col });
+  };
+
+  const handleCellLeave = () => {
+    setHoveredCell(null);
   };
 
   const getCellColor = (row, col) => {
@@ -133,8 +114,12 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
       return piece.type === 'domino' ? 'bg-blue-500' : 'bg-purple-500';
     }
 
-    if (selectedCell?.row === row && selectedCell?.col === col) {
-      return 'bg-yellow-300';
+    if (hoveredCell && selectedPiece && canPlacePiece(hoveredCell.row, hoveredCell.col, selectedPiece)) {
+      const wouldBeOccupied = getPieceCells(hoveredCell.row, hoveredCell.col, selectedPiece)
+        .some(cell => cell.row === row && cell.col === col);
+      if (wouldBeOccupied) {
+        return selectedPiece.type === 'domino' ? 'bg-blue-200' : 'bg-purple-200';
+      }
     }
 
     return 'bg-white';
@@ -152,35 +137,24 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
   }, [placedPieces]);
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="grid gap-1 bg-gray-200 p-4 rounded-lg">
-        {gameState.map((row, i) => (
-          <div key={i} className="flex gap-1">
-            {row.map((_, j) => (
-              <motion.div
-                key={`${i}-${j}`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className={`w-12 h-12 ${getCellColor(i, j)} 
-                  border-2 border-gray-300 rounded-md cursor-pointer 
-                  transition-colors duration-200`}
-                onClick={() => handleCellClick(i, j)}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-
-      {puzzleNumber > 2 && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleRotate}
-          className="px-6 py-2 bg-indigo-500 text-white rounded-full shadow-lg hover:bg-indigo-600 transition-colors"
-        >
-          Rotate T-Piece ({rotation}°)
-        </motion.button>
-      )}
+    <div className="grid gap-1 bg-gray-200 p-4 rounded-lg">
+      {gameState.map((row, i) => (
+        <div key={i} className="flex gap-1">
+          {row.map((_, j) => (
+            <motion.div
+              key={`${i}-${j}`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`w-12 h-12 ${getCellColor(i, j)} 
+                border-2 border-gray-300 rounded-md cursor-pointer 
+                transition-colors duration-200`}
+              onClick={() => handleCellClick(i, j)}
+              onMouseEnter={() => handleCellHover(i, j)}
+              onMouseLeave={handleCellLeave}
+            />
+          ))}
+        </div>
+      ))}
     </div>
   );
 };

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { motion } from 'framer-motion';
 import PuzzleGrid from '../components/PuzzleGrid';
+import PuzzlePieces from '../components/PuzzlePieces';
 
 const PuzzleGame = () => {
   const [currentPuzzle, setCurrentPuzzle] = useState(1);
   const [gameState, setGameState] = useState([]);
   const [placedPieces, setPlacedPieces] = useState([]);
+  const [selectedPiece, setSelectedPiece] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -34,6 +36,7 @@ const PuzzleGame = () => {
     const initialState = initializePuzzle(currentPuzzle);
     setGameState(initialState);
     setPlacedPieces([]);
+    setSelectedPiece(null);
     setHistory([{ grid: initialState, pieces: [] }]);
     setHistoryIndex(0);
   }, [currentPuzzle]);
@@ -73,6 +76,7 @@ const PuzzleGame = () => {
     const initialState = initializePuzzle(currentPuzzle);
     setGameState(initialState);
     setPlacedPieces([]);
+    setSelectedPiece(null);
     setHistory([{ grid: initialState, pieces: [] }]);
     setHistoryIndex(0);
   };
@@ -136,12 +140,22 @@ const PuzzleGame = () => {
               {getPuzzleProgress()}
             </div>
 
+            {/* Piece Selection */}
+            <div className="mb-8">
+              <PuzzlePieces
+                puzzleNumber={currentPuzzle}
+                selectedPiece={selectedPiece}
+                onPieceSelect={setSelectedPiece}
+              />
+            </div>
+
             {/* Game Grid */}
             <div className="flex justify-center mb-8">
               <PuzzleGrid
                 puzzleNumber={currentPuzzle}
                 gameState={gameState}
                 onStateChange={handleStateChange}
+                selectedPiece={selectedPiece}
               />
             </div>
 
