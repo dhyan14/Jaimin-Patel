@@ -65,21 +65,25 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
     );
   }
 
-  // Reordered rotations to swap 2nd and 4th positions
-  const rotations = [0, 270, 180, 90];
+  const rotations = [0, 90, 180, 270];
+  // Create an array of indices that represents the visual order we want
+  const visualOrder = [0, 3, 2, 1];
 
   return (
     <div className="flex flex-col gap-4 items-center">
       <h3 className="text-lg font-semibold text-gray-700">Available Rotations:</h3>
       <div className="grid grid-cols-2 gap-4 p-4 bg-gray-100 rounded-xl">
-        {rotations.map((rotation) => (
-          <TetrominoPiece
-            key={rotation}
-            isSelected={selectedPiece?.type === 'tetromino' && selectedPiece?.rotation === rotation}
-            onClick={() => onPieceSelect({ type: 'tetromino', rotation })}
-            rotation={rotation}
-          />
-        ))}
+        {visualOrder.map((index) => {
+          const rotation = rotations[index];
+          return (
+            <TetrominoPiece
+              key={rotation}
+              isSelected={selectedPiece?.type === 'tetromino' && selectedPiece?.rotation === rotation}
+              onClick={() => onPieceSelect({ type: 'tetromino', rotation })}
+              rotation={rotation}
+            />
+          );
+        })}
       </div>
     </div>
   );
