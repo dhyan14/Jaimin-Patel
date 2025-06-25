@@ -24,19 +24,19 @@ const TetrominoPiece = ({ isSelected, onClick, rotation }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`flex items-center justify-center cursor-pointer bg-white rounded-lg shadow-md p-4 ${
+      className={`flex items-center justify-center cursor-pointer bg-white rounded-lg shadow-md p-2 ${
         isSelected ? 'ring-2 ring-yellow-400' : 'hover:ring-1 hover:ring-purple-300'
       } w-[120px] h-[120px]`}
     >
       <div style={{ transform: `rotate(${rotation}deg)` }}>
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <g transform="translate(8, 8)">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <g transform="translate(12, 12)">
             {/* Three blocks on top */}
-            <rect x="0" y="0" width="16" height="16" fill="#9333ea" stroke="black" strokeWidth="1" />
-            <rect x="16" y="0" width="16" height="16" fill="#9333ea" stroke="black" strokeWidth="1" />
-            <rect x="32" y="0" width="16" height="16" fill="#9333ea" stroke="black" strokeWidth="1" />
+            <rect x="0" y="0" width="24" height="24" fill="#9333ea" stroke="black" strokeWidth="1.5" />
+            <rect x="24" y="0" width="24" height="24" fill="#9333ea" stroke="black" strokeWidth="1.5" />
+            <rect x="48" y="0" width="24" height="24" fill="#9333ea" stroke="black" strokeWidth="1.5" />
             {/* One block below */}
-            <rect x="16" y="16" width="16" height="16" fill="#9333ea" stroke="black" strokeWidth="1" />
+            <rect x="24" y="24" width="24" height="24" fill="#9333ea" stroke="black" strokeWidth="1.5" />
           </g>
         </svg>
       </div>
@@ -65,11 +65,14 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
     );
   }
 
+  // Reordered rotations to swap 2nd and 4th positions
+  const rotations = [0, 270, 180, 90];
+
   return (
     <div className="flex flex-col gap-4 items-center">
       <h3 className="text-lg font-semibold text-gray-700">Available Rotations:</h3>
       <div className="grid grid-cols-2 gap-4 p-4 bg-gray-100 rounded-xl">
-        {[0, 90, 180, 270].map((rotation) => (
+        {rotations.map((rotation) => (
           <TetrominoPiece
             key={rotation}
             isSelected={selectedPiece?.type === 'tetromino' && selectedPiece?.rotation === rotation}
