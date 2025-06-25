@@ -4,6 +4,17 @@ import { motion } from 'framer-motion';
 import PuzzleGrid from '../components/PuzzleGrid';
 import PuzzlePieces from '../components/PuzzlePieces';
 
+const MathSymbol = ({ symbol, className }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0 }}
+    animate={{ opacity: 0.1, scale: 1 }}
+    transition={{ duration: 1 }}
+    className={`absolute text-white font-serif select-none pointer-events-none ${className}`}
+  >
+    {symbol}
+  </motion.div>
+);
+
 const PuzzleGame = () => {
   const [currentPuzzle, setCurrentPuzzle] = useState(1);
   const [gameState, setGameState] = useState([]);
@@ -122,27 +133,42 @@ const PuzzleGame = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900 py-12 px-4 relative overflow-hidden">
+        {/* Mathematical Background Symbols */}
+        <MathSymbol symbol="∫" className="text-8xl top-20 left-[10%] transform -rotate-12" />
+        <MathSymbol symbol="Σ" className="text-7xl top-40 right-[15%] transform rotate-6" />
+        <MathSymbol symbol="π" className="text-6xl bottom-32 left-[20%] transform rotate-12" />
+        <MathSymbol symbol="∞" className="text-8xl bottom-24 right-[25%] transform -rotate-6" />
+        <MathSymbol symbol="θ" className="text-7xl top-1/3 left-[5%] transform rotate-45" />
+        <MathSymbol symbol="√" className="text-6xl top-1/4 right-[8%] transform -rotate-12" />
+        <MathSymbol symbol="∂" className="text-7xl bottom-1/4 left-[12%] transform rotate-12" />
+        <MathSymbol symbol="λ" className="text-6xl bottom-1/3 right-[10%] transform -rotate-45" />
+
+        <div className="max-w-4xl mx-auto relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-2xl p-8"
+            className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-purple-200"
           >
-            <h1 className="text-4xl font-bold text-center mb-4 text-gray-800">
-              Puzzle Game - Level {currentPuzzle}
-            </h1>
+            <div className="relative">
+              <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Mathematical Puzzle Game
+              </h1>
+              <h2 className="text-2xl font-semibold text-center mb-6 text-gray-600">
+                Level {currentPuzzle}
+              </h2>
+            </div>
             
-            <div className="text-lg text-gray-600 mb-4 text-center">
+            <div className="text-lg font-medium text-gray-700 mb-4 text-center p-3 bg-purple-50 rounded-lg border border-purple-100">
               {getPuzzleDescription()}
             </div>
 
-            <div className="text-md text-gray-500 mb-8 text-center">
+            <div className="text-md font-medium text-gray-600 mb-8 text-center bg-blue-50 p-2 rounded-lg border border-blue-100">
               {getPuzzleProgress()}
             </div>
 
             {/* Piece Selection */}
-            <div className="mb-8">
+            <div className="mb-8 bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-xl border border-purple-100">
               <PuzzlePieces
                 puzzleNumber={currentPuzzle}
                 selectedPiece={selectedPiece}
@@ -152,13 +178,15 @@ const PuzzleGame = () => {
 
             {/* Game Grid */}
             <div className="flex justify-center mb-8">
-              <PuzzleGrid
-                puzzleNumber={currentPuzzle}
-                gameState={gameState}
-                onStateChange={handleStateChange}
-                selectedPiece={selectedPiece}
-                placedPieces={placedPieces}
-              />
+              <div className="p-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl">
+                <PuzzleGrid
+                  puzzleNumber={currentPuzzle}
+                  gameState={gameState}
+                  onStateChange={handleStateChange}
+                  selectedPiece={selectedPiece}
+                  placedPieces={placedPieces}
+                />
+              </div>
             </div>
 
             {/* Control Buttons */}
@@ -166,8 +194,10 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-6 py-2 bg-blue-500 text-white rounded-full shadow-lg transition-colors ${
-                  historyIndex <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+                className={`px-6 py-2.5 rounded-full shadow-lg transition-all duration-200 ${
+                  historyIndex <= 0 
+                    ? 'bg-gray-300 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
                 }`}
                 onClick={handleUndo}
                 disabled={historyIndex <= 0}
@@ -177,8 +207,10 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-6 py-2 bg-green-500 text-white rounded-full shadow-lg transition-colors ${
-                  historyIndex >= history.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-600'
+                className={`px-6 py-2.5 rounded-full shadow-lg transition-all duration-200 ${
+                  historyIndex >= history.length - 1
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
                 }`}
                 onClick={handleRedo}
                 disabled={historyIndex >= history.length - 1}
@@ -188,7 +220,7 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                className="px-6 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-lg transition-all duration-200"
                 onClick={handleReset}
               >
                 Reset
@@ -200,11 +232,11 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-6 py-2 ${
+                className={`px-8 py-2.5 rounded-full shadow-lg transition-all duration-200 ${
                   currentPuzzle === 1
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-purple-500 hover:bg-purple-600'
-                } text-white rounded-full shadow-lg transition-colors`}
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white'
+                }`}
                 onClick={handlePreviousPuzzle}
                 disabled={currentPuzzle === 1}
               >
@@ -213,11 +245,11 @@ const PuzzleGame = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-6 py-2 ${
+                className={`px-8 py-2.5 rounded-full shadow-lg transition-all duration-200 ${
                   currentPuzzle === 4
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-purple-500 hover:bg-purple-600'
-                } text-white rounded-full shadow-lg transition-colors`}
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-700 hover:to-indigo-600 text-white'
+                }`}
                 onClick={handleNextPuzzle}
                 disabled={currentPuzzle === 4}
               >
