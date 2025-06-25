@@ -6,99 +6,91 @@ const DominoPiece = ({ isSelected, onClick, orientation = 'horizontal' }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`cursor-pointer ${orientation === 'horizontal' ? 'w-24 h-12' : 'w-12 h-24'} ${
-        isSelected ? 'ring-4 ring-yellow-400' : ''
+      className={`cursor-pointer p-2 bg-white rounded-lg shadow-md ${
+        isSelected ? 'ring-4 ring-yellow-400' : 'hover:ring-2 hover:ring-blue-300'
       }`}
     >
-      <div className={`w-full h-full flex ${orientation === 'horizontal' ? 'flex-row' : 'flex-col'}`}>
-        <div className="flex-1 bg-blue-500 border-2 border-blue-600 rounded-md m-0.5"></div>
-        <div className="flex-1 bg-blue-500 border-2 border-blue-600 rounded-md m-0.5"></div>
+      <div className={`flex ${orientation === 'horizontal' ? 'flex-row' : 'flex-col'} gap-1`}>
+        <div className="w-12 h-12 bg-blue-500 rounded-md border-2 border-blue-600"></div>
+        <div className="w-12 h-12 bg-blue-500 rounded-md border-2 border-blue-600"></div>
       </div>
     </motion.div>
   );
 };
 
 const TetrominoPiece = ({ isSelected, onClick, rotation }) => {
-  const getRotationStyle = () => {
-    const baseStyle = 'w-12 h-12 bg-purple-500 border-2 border-purple-600 rounded-md m-0.5';
-    return baseStyle;
-  };
-
-  const getContainerStyle = () => {
+  const getGridStyle = () => {
     switch (rotation) {
-      case 0: // ⊤
-        return 'grid grid-cols-3 grid-rows-2 w-36 h-24';
+      case 0: // T
+        return {
+          gridTemplate: `
+            "a b c"
+            ". d ."
+          `,
+          width: '156px',
+          height: '104px'
+        };
       case 90: // ⊢
-        return 'grid grid-cols-2 grid-rows-3 w-24 h-36';
+        return {
+          gridTemplate: `
+            ". b ."
+            "a b ."
+            ". b ."
+          `,
+          width: '104px',
+          height: '156px'
+        };
       case 180: // ⊥
-        return 'grid grid-cols-3 grid-rows-2 w-36 h-24';
+        return {
+          gridTemplate: `
+            ". b ."
+            "a b c"
+          `,
+          width: '156px',
+          height: '104px'
+        };
       case 270: // ⊣
-        return 'grid grid-cols-2 grid-rows-3 w-24 h-36';
+        return {
+          gridTemplate: `
+            ". b ."
+            ". b a"
+            ". b ."
+          `,
+          width: '104px',
+          height: '156px'
+        };
       default:
-        return '';
+        return {};
     }
   };
 
-  const renderTetromino = () => {
-    switch (rotation) {
-      case 0: // ⊤
-        return (
-          <>
-            <div className="col-start-1 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-3 col-span-1"></div>
-            <div className="col-start-1 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-3 col-span-1"></div>
-          </>
-        );
-      case 90: // ⊢
-        return (
-          <>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-2 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-2 col-span-1"></div>
-          </>
-        );
-      case 180: // ⊥
-        return (
-          <>
-            <div className="col-start-1 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-3 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-          </>
-        );
-      case 270: // ⊣
-        return (
-          <>
-            <div className="col-start-1 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className="col-start-1 col-span-1"></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-            <div className={getRotationStyle()}></div>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
+  const style = getGridStyle();
 
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`cursor-pointer ${isSelected ? 'ring-4 ring-yellow-400 rounded-lg' : ''}`}
+      className={`cursor-pointer p-4 bg-white rounded-lg shadow-md ${
+        isSelected ? 'ring-4 ring-yellow-400' : 'hover:ring-2 hover:ring-purple-300'
+      }`}
     >
-      <div className={getContainerStyle()}>
-        {renderTetromino()}
+      <div
+        style={{
+          display: 'grid',
+          gap: '4px',
+          ...style
+        }}
+      >
+        {Array(4).fill(null).map((_, i) => (
+          <div
+            key={i}
+            className="w-12 h-12 bg-purple-500 rounded-md border-2 border-purple-600"
+            style={{
+              gridArea: String.fromCharCode(97 + i) // 'a', 'b', 'c', 'd'
+            }}
+          />
+        ))}
       </div>
     </motion.div>
   );
@@ -109,7 +101,7 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
     return (
       <div className="flex flex-col gap-4 items-center">
         <h3 className="text-lg font-semibold text-gray-700">Available Pieces:</h3>
-        <div className="flex gap-4">
+        <div className="flex gap-4 p-4 bg-gray-100 rounded-xl">
           <DominoPiece
             isSelected={selectedPiece?.type === 'domino' && selectedPiece?.orientation === 'horizontal'}
             onClick={() => onPieceSelect({ type: 'domino', orientation: 'horizontal' })}
@@ -128,7 +120,7 @@ const PuzzlePieces = ({ puzzleNumber, selectedPiece, onPieceSelect }) => {
   return (
     <div className="flex flex-col gap-4 items-center">
       <h3 className="text-lg font-semibold text-gray-700">Available Rotations:</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6 p-6 bg-gray-100 rounded-xl">
         {[0, 90, 180, 270].map((rotation) => (
           <TetrominoPiece
             key={rotation}

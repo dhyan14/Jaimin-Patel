@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
-  const [selectedPiece, setSelectedPiece] = useState(null);
+const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece }) => {
   const [placedPieces, setPlacedPieces] = useState([]);
   const [hoveredCell, setHoveredCell] = useState(null);
 
@@ -19,45 +18,52 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
 
     if (piece.type === 'domino') {
       if (piece.orientation === 'horizontal') {
+        if (col >= gameState[0].length - 1) return [];
         return [
           { row, col },
           { row, col: col + 1 }
         ];
       } else {
+        if (row >= gameState.length - 1) return [];
         return [
           { row, col },
           { row: row + 1, col }
         ];
       }
     } else if (piece.type === 'tetromino') {
+      const size = gameState.length;
       switch (piece.rotation) {
-        case 0: // ⊤
+        case 0: // T
+          if (row >= size - 1 || col <= 0 || col >= size - 1) return [];
           return [
-            { row, col },
-            { row, col: col - 1 },
-            { row, col: col + 1 },
-            { row: row + 1, col }
+            { row, col }, // center
+            { row, col: col - 1 }, // left
+            { row, col: col + 1 }, // right
+            { row: row + 1, col } // bottom
           ];
         case 90: // ⊢
+          if (row <= 0 || row >= size - 1 || col >= size - 1) return [];
           return [
-            { row, col },
-            { row: row - 1, col },
-            { row: row + 1, col },
-            { row, col: col + 1 }
+            { row, col }, // center
+            { row: row - 1, col }, // top
+            { row: row + 1, col }, // bottom
+            { row, col: col + 1 } // right
           ];
         case 180: // ⊥
+          if (row <= 0 || col <= 0 || col >= size - 1) return [];
           return [
-            { row, col },
-            { row, col: col - 1 },
-            { row, col: col + 1 },
-            { row: row - 1, col }
+            { row, col }, // center
+            { row, col: col - 1 }, // left
+            { row, col: col + 1 }, // right
+            { row: row - 1, col } // top
           ];
         case 270: // ⊣
+          if (row <= 0 || row >= size - 1 || col <= 0) return [];
           return [
-            { row, col },
-            { row: row - 1, col },
-            { row: row + 1, col },
-            { row, col: col - 1 }
+            { row, col }, // center
+            { row: row - 1, col }, // top
+            { row: row + 1, col }, // bottom
+            { row, col: col - 1 } // left
           ];
         default:
           return [];
@@ -71,27 +77,36 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
     if (!piece) return false;
     
     const cells = getPieceCells(row, col, piece);
+    if (cells.length === 0) return false;
+
     return cells.every(cell => {
-      const isValid = cell.row >= 0 && 
-                     cell.row < gameState.length && 
-                     cell.col >= 0 && 
-                     cell.col < gameState[0].length;
-      if (!isValid) return false;
+      if (cell.row < 0 || cell.row >= gameState.length || 
+          cell.col < 0 || cell.col >= gameState[0].length) return false;
       if (gameState[cell.row][cell.col] === 'blocked') return false;
       return !isPartOfPlacedPiece(cell.row, cell.col);
     });
   };
 
   const handleCellClick = (row, col) => {
-    if (gameState[row][col] === 'blocked') return;
-    if (!selectedPiece) return;
+    if (!selectedPiece || gameState[row][col] === 'blocked') return;
 
     if (canPlacePiece(row, col, selectedPiece)) {
+      const cells = getPieceCells(row, col, selectedPiece);
       const newPiece = {
         ...selectedPiece,
-        cells: getPieceCells(row, col, selectedPiece)
+        cells
       };
-      setPlacedPieces([...placedPieces, newPiece]);
+      const newPlacedPieces = [...placedPieces, newPiece];
+      setPlacedPieces(newPlacedPieces);
+      
+      // Update game state
+      const newGameState = gameState.map((r, i) => 
+        r.map((cell, j) => {
+          if (cells.some(c => c.row === i && c.col === j)) return 'piece';
+          return cell;
+        })
+      );
+      onStateChange(newGameState, newPlacedPieces);
     }
   };
 
@@ -124,17 +139,6 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange }) => {
 
     return 'bg-white';
   };
-
-  useEffect(() => {
-    // Update parent component's state
-    const newGameState = gameState.map((row, i) => 
-      row.map((cell, j) => {
-        if (isPartOfPlacedPiece(i, j)) return 'piece';
-        return cell;
-      })
-    );
-    onStateChange(newGameState, placedPieces);
-  }, [placedPieces]);
 
   return (
     <div className="grid gap-1 bg-gray-200 p-4 rounded-lg">
