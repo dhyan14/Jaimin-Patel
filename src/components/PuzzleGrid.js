@@ -124,26 +124,22 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece, pla
     );
 
     if (piece) {
-      return piece.type === 'domino' 
-        ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
-        : 'bg-gradient-to-br from-purple-500 to-purple-600';
+      return piece.type === 'domino' ? 'bg-blue-500' : 'bg-purple-500';
     }
 
     if (hoveredCell && selectedPiece && canPlacePiece(hoveredCell.row, hoveredCell.col, selectedPiece)) {
       const wouldBeOccupied = getPieceCells(hoveredCell.row, hoveredCell.col, selectedPiece)
-        .some(cell => cell.row === row && cell.col === cell);
+        .some(cell => cell.row === row && cell.col === col);
       if (wouldBeOccupied) {
-        return selectedPiece.type === 'domino' 
-          ? 'bg-gradient-to-br from-blue-200 to-blue-300' 
-          : 'bg-gradient-to-br from-purple-200 to-purple-300';
+        return selectedPiece.type === 'domino' ? 'bg-blue-200' : 'bg-purple-200';
       }
     }
 
-    return 'bg-white hover:bg-gray-50';
+    return 'bg-white';
   };
 
   return (
-    <div className="grid gap-1 bg-white rounded-lg p-4">
+    <div className="grid gap-1 bg-gray-200 p-4 rounded-lg">
       {gameState.map((row, i) => (
         <div key={i} className="flex gap-1">
           {row.map((_, j) => (
@@ -152,8 +148,8 @@ const PuzzleGrid = ({ puzzleNumber, gameState, onStateChange, selectedPiece, pla
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className={`w-12 h-12 ${getCellColor(i, j)} 
-                border-2 border-gray-200 rounded-md cursor-pointer 
-                transition-all duration-200 shadow-sm hover:shadow-md`}
+                border-2 border-gray-300 rounded-md cursor-pointer 
+                transition-colors duration-200`}
               onClick={() => handleCellClick(i, j)}
               onMouseEnter={() => handleCellHover(i, j)}
               onMouseLeave={handleCellLeave}
